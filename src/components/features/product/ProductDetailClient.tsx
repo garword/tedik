@@ -361,6 +361,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
     const [comment, setComment] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [isLoadingReviews, setIsLoadingReviews] = useState(true);
     const reviewsPerPage = 10;
 
     // Smart Natural Comment Generator
@@ -433,6 +434,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
     };
 
     const fetchPageReviews = async (page: number) => {
+        setIsLoadingReviews(true);
         if (page === 1) {
             // Page 1: Fetch Real + Fill with Fake
             try {
@@ -490,6 +492,11 @@ export default function ProductDetailClient({ product, user, tierName }: Product
             const fakes = generateFakeReviews(Math.min(remaining, reviewsPerPage), startOffset);
             setReviews(fakes);
         }
+
+        // Small delay for smooth transition feel
+        setTimeout(() => {
+            setIsLoadingReviews(false);
+        }, 600);
     };
 
     useEffect(() => {
@@ -958,7 +965,28 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                 {/* Review Form removed as per new flow (Review from Order History) */}
 
                                 <div className="space-y-4 min-h-[400px]">
-                                    {reviews.length === 0 ? (
+                                    {isLoadingReviews ? (
+                                        [...Array(3)].map((_, i) => (
+                                            <div key={i} className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+                                                    <div className="flex-1 space-y-3 py-1">
+                                                        <div className="flex justify-between items-start">
+                                                            <div className="space-y-2">
+                                                                <div className="h-4 bg-gray-200 rounded w-24"></div>
+                                                                <div className="flex gap-1">
+                                                                    {[...Array(5)].map((_, j) => (
+                                                                        <div key={j} className="w-3 h-3 bg-gray-200 rounded-full"></div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="h-16 bg-gray-100 rounded-xl rounded-tl-none w-full mt-3"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : reviews.length === 0 ? (
                                         <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
                                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-gray-300">
                                                 <FileText className="w-8 h-8" />

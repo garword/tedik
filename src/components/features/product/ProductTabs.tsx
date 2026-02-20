@@ -111,11 +111,6 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
                     );
                 })}
             </div>
-
-            {/* Global Dimmer Overlay during Transition */}
-            {isPending && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 dark:bg-black/20 backdrop-blur-[1px] cursor-wait pointer-events-auto transition-opacity duration-300" />
-            )}
         </div>
     );
 }
