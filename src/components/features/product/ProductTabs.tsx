@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useTransition, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Film, Music, Shield, Cpu, LayoutGrid, Gamepad2, Smartphone, Monitor, Tag } from 'lucide-react';
+import { Film, Music, Shield, Cpu, LayoutGrid, Gamepad2, Smartphone, Monitor, Tag, Loader2 } from 'lucide-react';
 
 const iconMap: any = {
     film: Film,
@@ -27,6 +27,10 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const currentTab = searchParams.get('tab') || 'foryou';
+
+    // Transition state for smooth loading
+    const [isPending, startTransition] = useTransition();
+    const [pendingTab, setPendingTab] = useState<string | null>(null);
 
     // Scroll handling refs
     const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -69,7 +73,10 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
         }
 
         // Reset page if needed, or keep other params like search 'q'
-        router.push(`/?${params.toString()}`, { scroll: false });
+        setPendingTab(tabId);
+        startTransition(() => {
+            router.push(`/?${params.toString()}`, { scroll: false });
+        });
     };
 
     return (
@@ -85,20 +92,30 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
                     return (
                         <button
                             key={tab.id}
+                            disabled={isPending}
                             onClick={() => handleTabClick(tab.id)}
                             className={cn(
-                                "flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border-b-[4px] active:border-b-0 active:translate-y-[4px]",
+                                "flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-bold whitespace-nowrap transition-all duration-200 border-b-[4px] active:border-b-0 active:translate-y-[4px] disabled:opacity-70 disabled:cursor-wait",
                                 isActive
                                     ? "bg-green-500 text-white border-green-700"
                                     : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
                             )}
                         >
-                            {Icon && <Icon size={18} strokeWidth={2.5} />}
+                            {pendingTab === tab.id && isPending ? (
+                                <Loader2 size={18} strokeWidth={2.5} className="animate-spin" />
+                            ) : (
+                                Icon && <Icon size={18} strokeWidth={2.5} />
+                            )}
                             <span>{tab.label}</span>
                         </button>
                     );
                 })}
             </div>
+
+            {/* Global Dimmer Overlay during Transition */}
+            {isPending && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/20 dark:bg-black/20 backdrop-blur-[1px] cursor-wait pointer-events-auto transition-opacity duration-300" />
+            )}
         </div>
     );
 }
