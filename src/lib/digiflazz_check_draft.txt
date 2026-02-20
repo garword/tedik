@@ -1,0 +1,53 @@
+
+import crypto from 'crypto';
+import prisma from '@/lib/prisma';
+
+// ... (existing imports/interfaces)
+
+// Add this function
+export async function checkDigiflazzStatus(payload: {
+    buyer_sku_code: string;
+    customer_no: string;
+    ref_id: string;
+}): Promise<any> {
+    const config = await getDigiflazzConfig();
+    const signature = crypto.createHash('md5').update(config.username + config.key + payload.ref_id).digest('hex');
+
+    const body = {
+        username: config.username,
+        buyer_sku_code: payload.buyer_sku_code,
+        customer_no: payload.customer_no,
+        ref_id: payload.ref_id,
+        sign: signature,
+        commands: "status-pasca" // Wait, is this for prepaid too? 
+        // Standard prepaid transaction check is just sending the transaction request again?
+        // Actually, Digiflazz has specific "status" commands often for Postpaid.
+        // For Prepaid, usually you just query the transaction endpoint.
+        // Let's stick to the "transaction" endpoint which returns current status.
+    };
+
+    // Correct approach for Prepaid Status in Digiflazz:
+    // Simply sending the same transaction request usually returns the existing transaction status without double charging if ref_id matches.
+    // BUT, ideally we want a read-only check. 
+    // Docs say: "Untuk melakukan pengecekan status transaksi, silakan gunakan endpoint yang sama dengan transaksi."
+
+    try {
+        const res = await fetch('https://api.digiflazz.com/v1/transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                username: config.username,
+                buyer_sku_code: payload.buyer_sku_code,
+                customer_no: payload.customer_no,
+                ref_id: payload.ref_id,
+                sign: signature
+            })
+        });
+
+        const data = await res.json();
+        return data;
+    } catch (e) {
+        console.error("Digiflazz Check Error", e);
+        return { data: { rc: '99', message: 'Connection Error' } };
+    }
+}
