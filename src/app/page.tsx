@@ -179,11 +179,11 @@ export default async function Home({
     return await Promise.all(rawProducts.map(async (p) => {
       const { product: tieredProduct } = await applyTierPricing(p, session?.userId);
 
-      // Calculate totalStock from variant.stock field (not stocks table)
-      // Imported products have stock=999999 but no Stock table entries
+      // Calculate totalStock: imported products use 'stock' field, manual digital products use 'stocks' array length
       const totalStock = tieredProduct.variants.reduce((acc: number, variant: any) => {
         const variantStock = variant.stock ? Number(variant.stock) : 0;
-        return acc + variantStock;
+        const availableStocksCount = variant.stocks ? variant.stocks.length : 0;
+        return acc + Math.max(variantStock, availableStocksCount);
       }, 0);
       const prices = tieredProduct.variants.map((v: any) => Number(v.price));
       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;

@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         // Check Stock Availability
         const isInstant = variant.deliveryType === 'instant' || variant.product?.category?.type === 'GAME';
         // Use real DigitalStock count for manual delivery products
-        const currentStock = isInstant ? 999 : variant._count.stocks;
+        const currentStock = isInstant ? 999 : Math.max(variant.stock ? Number(variant.stock) : 0, variant._count.stocks);
 
         if (!isInstant) {
             const requestedTotal = quantity; // + existing quantity if any

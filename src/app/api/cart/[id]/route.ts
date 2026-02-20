@@ -40,7 +40,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
         const variant = cartItem.variant;
         const isInstant = variant.deliveryType === 'instant' || variant.product?.category?.type === 'GAME';
-        const currentStock = isInstant ? 999 : variant._count.stocks;
+        const currentStock = isInstant ? 999 : Math.max(variant.stock ? Number(variant.stock) : 0, variant._count.stocks);
 
         if (!isInstant && quantity > currentStock) {
             return NextResponse.json({ error: `Stok tidak cukup. Maksimal: ${currentStock}` }, { status: 400 });

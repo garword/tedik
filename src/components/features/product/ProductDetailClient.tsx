@@ -917,7 +917,10 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                         product.name?.includes('FREE FIRE') ||
                                         product.name?.includes('MOBILE')
                                     );
-                                    const totalStock = product.variants.reduce((acc: number, v: any) => acc + (v.stocks?.length || 0), 0);
+                                    const totalStock = product.variants.reduce((acc: number, v: any) => {
+                                        const count = Math.max(v.stock ? Number(v.stock) : 0, v.stocks?.length || 0);
+                                        return acc + count;
+                                    }, 0);
 
                                     if (!hasInstantDelivery && totalStock === 0) {
                                         return (
@@ -1179,7 +1182,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                             </h3>
                                             <div className="space-y-3">
                                                 {product.variants.map((variant: any, index: number) => {
-                                                    const stock = variant.stocks?.length || 0;
+                                                    const stock = Math.max(variant.stock ? Number(variant.stock) : 0, variant.stocks?.length || 0);
                                                     // For instant delivery (game topup via API), ignore stock check
                                                     const isInstantDelivery = product.category?.type === 'GAME' || variant.deliveryType === 'instant' ||
                                                         product.slug?.includes('free-fire') ||
@@ -1526,7 +1529,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                             const max = !selectedVariant ? 100000 : (
                                                                                 (product.category?.type === 'GAME' || selectedVariant.deliveryType === 'instant' || product.slug?.includes('free-fire') || product.slug?.includes('mobile-legends') || product.name?.includes('FREE FIRE') || product.name?.includes('MOBILE'))
                                                                                     ? 100000
-                                                                                    : (selectedVariant.stocks?.length || 0)
+                                                                                    : Math.max(selectedVariant.stock ? Number(selectedVariant.stock) : 0, selectedVariant.stocks?.length || 0)
                                                                             );
                                                                             if (val <= max) setQuantity(val);
                                                                         }
@@ -1538,7 +1541,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                     disabled={(() => {
                                                                         if (!selectedVariant) return true;
                                                                         const isInstant = product.category?.type === 'GAME' || selectedVariant.deliveryType === 'instant' || product.slug?.includes('free-fire') || product.slug?.includes('mobile-legends') || product.name?.includes('FREE FIRE') || product.name?.includes('MOBILE');
-                                                                        const stock = selectedVariant.stocks?.length || 0;
+                                                                        const stock = Math.max(selectedVariant.stock ? Number(selectedVariant.stock) : 0, selectedVariant.stocks?.length || 0);
                                                                         return !isInstant && (Number(quantity) || 0) >= stock;
                                                                     })()}
                                                                     className="p-3 hover:bg-white rounded-lg transition-all disabled:opacity-50 text-gray-600"
