@@ -4,7 +4,7 @@
 import { useRef, useTransition, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Film, Music, Shield, Cpu, LayoutGrid, Gamepad2, Smartphone, Monitor, Tag, Loader2 } from 'lucide-react';
+import { Film, Music, Shield, Cpu, LayoutGrid, Gamepad2, Smartphone, Monitor, Tag, Loader2, MessageSquare } from 'lucide-react';
 
 const iconMap: any = {
     film: Film,
@@ -58,6 +58,7 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
         { id: 'games', label: 'Topup Game', icon: Gamepad2 },
         { id: 'pulsa', label: 'Pulsa & Data', icon: Smartphone },
         { id: 'sosmed', label: 'Sosmed', icon: Monitor },
+        { id: 'otp', label: 'Nomor Virtual', icon: MessageSquare },
     ];
 
     const handleTabClick = (tabId: string) => {
@@ -87,6 +88,7 @@ export default function ProductTabs({ categories = [] }: ProductTabsProps) {
         >
             <div className="flex space-x-3 min-w-max">
                 {tabs.map((tab) => {
+                    // Cek aktif
                     const isActive = currentTab === tab.id || (tab.id === 'foryou' && !searchParams.get('tab'));
                     const Icon = tab.icon;
                     return (

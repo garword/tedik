@@ -5,6 +5,9 @@ export const metadata = {
 };
 
 export default function SystemPage() {
+    // Membaca kata sandi cron secara server-side
+    const cronSecret = process.env.CRON_SECRET || 'ganti_di_env_cron_secret';
+
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -14,7 +17,7 @@ export default function SystemPage() {
                 </div>
             </div>
 
-            <SystemEndpoints />
+            <SystemEndpoints cronSecret={cronSecret} />
         </div>
     );
 }

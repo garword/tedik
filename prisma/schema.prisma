@@ -38,6 +38,7 @@ model User {
   wishlist             WishlistItem[]
   tickets              Ticket[]
   ticketMessages       TicketMessage[]
+  virtualNumberOrders  VirtualNumberOrder[]
 }
 
 model Category {
@@ -381,3 +382,21 @@ model TicketMessage {
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   sender    User     @relation(fields: [senderId], references: [id])
 }
+
+model VirtualNumberOrder {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  apiIdNum      String   @unique                 // Operation ID dari VAK-SMS
+  service       String                           // Kode service (e.g., 'wa' untuk WhatsApp)
+  country       String                           // Kode negara (e.g., 'id')
+  operator      String?                          // Nama operator (optional)
+  phoneNumber   String                           // Nomor HP yang disewakan (Format CC+Number)
+  price         Decimal                          // Harga beli dari VAK (Rubel)
+  userPrice     Decimal                          // Harga jual ke User (IDR)
+  smsCode       String?                          // SMS Kode (Jika sudah masuk)
+  status        String   @default("WAITING")     // WAITING, SUCCESS, CANCELLED, REFUNDED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+

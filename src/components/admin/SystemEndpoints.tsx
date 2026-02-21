@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Copy, CheckCircle } from 'lucide-react';
 
-export default function SystemEndpoints() {
+export default function SystemEndpoints({ cronSecret = 'ganti_di_env_cron_secret' }: { cronSecret?: string }) {
     const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
     const [baseUrl, setBaseUrl] = useState('https://your-domain.com');
 
@@ -15,14 +15,14 @@ export default function SystemEndpoints() {
 
     const endpoints = [
         {
-            name: 'Medanpedia Auto-Sync (Cron Job)',
-            url: `${baseUrl}/api/medanpedia/auto-sync`,
-            description: 'URL untuk Cron Job (Set setiap 1 jam, misal pakai cron-job.org). Menyinkronkan katalog dan harga produk SMM.'
+            name: 'VPS Sync: All Providers (Cron)',
+            url: `${baseUrl}/vps-cron/sync-all?secret=${cronSecret}`,
+            description: 'URL khusus Cloudflare Origin Rules untuk Sinkronisasi Semua Harga Provider secara berurutan berkat Antrean Internal VPS (Disarankan: Cron setiap jam)'
         },
         {
             name: 'Unified Status Check (Cron Job)',
             url: `${baseUrl}/api/cron/check-status`,
-            description: 'URL untuk Cron Job VPS (Set setiap 1 menit). Mengecek status SMM, PPOB, dan Expired.'
+            description: 'URL untuk mengecek status pesanan pending dari SMM, PPOB, dll.'
         },
         {
             name: 'Digiflazz Webhook',

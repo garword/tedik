@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Gamepad2, Smartphone, Globe, Tag, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Save, Gamepad2, Smartphone, Globe, Tag, AlertTriangle, CheckCircle2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { motion } from 'framer-motion';
 
@@ -10,11 +10,12 @@ const SERVICES = [
     { id: 'DIGITAL', label: 'Produk Digital', icon: Tag, color: 'text-blue-600', bg: 'bg-blue-100' },
     { id: 'PULSA', label: 'Pulsa & Data', icon: Smartphone, color: 'text-orange-600', bg: 'bg-orange-100' },
     { id: 'SOSMED', label: 'Social Media', icon: Globe, color: 'text-pink-600', bg: 'bg-pink-100' },
+    { id: 'OTP', label: 'Nomor Virtual', icon: MessageSquare, color: 'text-emerald-600', bg: 'bg-emerald-100' },
 ];
 
 export default function ServicesPage() {
     const [status, setStatus] = useState<Record<string, boolean>>({
-        GAME: true, DIGITAL: true, PULSA: true, SOSMED: true
+        GAME: true, DIGITAL: true, PULSA: true, SOSMED: true, OTP: true
     });
     const [loading, setLoading] = useState(true);
     const { showToast } = useToast();
@@ -81,8 +82,8 @@ export default function ServicesPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className={`relative overflow-hidden rounded-3xl border-2 transition-all duration-300 ${isActive
-                                    ? 'bg-white border-gray-100 shadow-lg hover:shadow-xl'
-                                    : 'bg-gray-50 border-gray-200 opacity-90 grayscale-[0.5]'
+                                ? 'bg-white border-gray-100 shadow-lg hover:shadow-xl'
+                                : 'bg-gray-50 border-gray-200 opacity-90 grayscale-[0.5]'
                                 }`}
                         >
                             <div className="p-6 space-y-6">

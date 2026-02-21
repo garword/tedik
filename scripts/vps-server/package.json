@@ -1,0 +1,17 @@
+{
+    "name": "tedik-vps-cron",
+    "version": "1.0.0",
+    "description": "Standalone Micro-Server for handling Provider Auto-Sync on VPS",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js"
+    },
+    "dependencies": {
+        "@libsql/client": "^0.6.0",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "axios": "^1.7.2",
+        "md5": "^2.3.0"
+    }
+}

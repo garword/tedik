@@ -9,7 +9,8 @@ const DEFAULT_CONFIG = {
     GAME: true,
     DIGITAL: true,
     PULSA: true,
-    SOSMED: true
+    SOSMED: true,
+    OTP: true
 };
 
 export async function GET(req: NextRequest) {

@@ -252,6 +252,19 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                         <span>Social Media</span>
                     </Link>
 
+                    {/* Layanan OTP */}
+                    <Link
+                        href="/admin/otp"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-sm mt-1 ${pathname === '/admin/otp'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                    >
+                        <Smartphone size={18} />
+                        <span>Layanan OTP</span>
+                    </Link>
+
                     {/* Tiket SMM */}
                     <Link
                         href="/admin/tickets"

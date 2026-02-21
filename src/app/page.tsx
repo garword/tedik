@@ -9,9 +9,7 @@ import TrustSection from '@/components/sections/TrustSection';
 import Footer from '@/components/layout/Footer';
 import SectionHeader from '@/components/ui/SectionHeader';
 import ServiceOfflineView from '@/components/ui/ServiceOfflineView';
-
-
-export const dynamic = 'force-dynamic';
+import OTPDashboard from '@/app/otp/OTPDashboard'; export const dynamic = 'force-dynamic';
 
 export default async function Home({
   searchParams,
@@ -35,7 +33,7 @@ export default async function Home({
   }
 
   // Fetch Service Status
-  let serviceStatus = { GAME: true, DIGITAL: true, PULSA: true, SOSMED: true };
+  let serviceStatus = { GAME: true, DIGITAL: true, PULSA: true, SOSMED: true, OTP: true };
   try {
     // @ts-ignore
     const config = await prisma.systemConfig.findUnique({ where: { key: 'MAIN_CATEGORY_STATUS' } });
@@ -259,7 +257,8 @@ export default async function Home({
     'games': 'GAME',
     'digital': 'DIGITAL',
     'pulsa': 'PULSA',
-    'sosmed': 'SOSMED'
+    'sosmed': 'SOSMED',
+    'otp': 'OTP'
   };
 
   const currentType = typeMapReverse[activeTab];
@@ -289,21 +288,29 @@ export default async function Home({
           {/* Passed empty array to force use of static tabs in ProductTabs as reverted */}
 
           <div className="px-1">
-            <SectionHeader
-              title={params.category ? `Kategori: ${params.category}` :
-                params.tab === 'promo' ? 'Diskon Spesial' :
-                  isGroupedView ? `Pilihan ${activeTab === 'games' ? 'Game' : activeTab === 'digital' ? 'Digital' : activeTab === 'pulsa' ? 'Pulsa & Data' : 'Terbaik'}` :
-                    params.tab === 'sosmed' ? 'Daftar Layanan' :
-                      params.q ? `Hasil pencarian: "${params.q}"` :
-                        'Rekomendasi Pilihan'}
-            />
-            {/* Count Badge */}
-            {!isGroupedView && <div className="text-sm font-medium text-gray-500 mb-4 pl-1">{gridProducts.length} Produk</div>}
+            {activeTab !== 'otp' && (
+              <>
+                <SectionHeader
+                  title={params.category ? `Kategori: ${params.category}` :
+                    params.tab === 'promo' ? 'Diskon Spesial' :
+                      isGroupedView ? `Pilihan ${activeTab === 'games' ? 'Game' : activeTab === 'digital' ? 'Digital' : activeTab === 'pulsa' ? 'Pulsa & Data' : 'Terbaik'}` :
+                        params.tab === 'sosmed' ? 'Daftar Layanan' :
+                          params.q ? `Hasil pencarian: "${params.q}"` :
+                            'Rekomendasi Pilihan'}
+                />
+                {/* Count Badge */}
+                {!isGroupedView && <div className="text-sm font-medium text-gray-500 mb-4 pl-1">{gridProducts.length} Produk</div>}
+              </>
+            )}
           </div>
 
           {/* RENDER LOGIC */}
           {isServiceOffline ? (
             <ServiceOfflineView />
+          ) : activeTab === 'otp' ? (
+            <div className="w-full -mt-6">
+              <OTPDashboard />
+            </div>
           ) : isGroupedView ? (
             // GROUPED VIEW (Horizontal Sections)
             <div className="space-y-8">
