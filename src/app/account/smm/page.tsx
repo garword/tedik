@@ -74,7 +74,7 @@ export default async function SmmProfilePage() {
             </div>
 
             {/* Order Table Component */}
-            <SmmOrderTable orders={serializedOrders} />
+            <SmmOrderTable orders={serializedOrders} userId={session.userId} />
 
             {/* Panduan Section */}
             <div className="bg-white rounded-xl border border-blue-100 shadow-sm overflow-hidden mt-8">

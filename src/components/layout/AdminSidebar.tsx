@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
     LayoutDashboard, ShoppingCart, Activity, Gamepad2, CreditCard,
-    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag
+    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag, MessageCircle
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -250,6 +250,19 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                     >
                         <Share2 size={18} />
                         <span>Social Media</span>
+                    </Link>
+
+                    {/* Tiket SMM */}
+                    <Link
+                        href="/admin/tickets"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-sm mt-1 ${pathname === '/admin/tickets'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                    >
+                        <MessageCircle size={18} />
+                        <span>Tiket SMM</span>
                     </Link>
                 </div>
 

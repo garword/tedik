@@ -12,23 +12,27 @@ import {
     XCircle,
     Clock,
     Search,
-    Loader2
+    Loader2,
+    MessageCircle
 } from 'lucide-react';
 import { formatRupiah } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import AlertModal from '@/components/ui/AlertModal';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import SmmDetailModal from '@/components/features/account/SmmDetailModal';
+import TicketUserModal from '@/components/features/account/TicketUserModal';
 
 interface SmmOrderTableProps {
     orders: any[]; // Serialized order items
+    userId: string;
 }
 
-export default function SmmOrderTable({ orders }: SmmOrderTableProps) {
+export default function SmmOrderTable({ orders, userId }: SmmOrderTableProps) {
     const router = useRouter();
     const [alertState, setAlertState] = useState<{ isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info' }>({ isOpen: false, title: '', message: '', type: 'info' });
     const [confirmState, setConfirmState] = useState<{ isOpen: boolean, title: string, message: string, onConfirm: () => void, type: 'info' | 'warning' | 'danger' }>({ isOpen: false, title: '', message: '', onConfirm: () => { }, type: 'info' });
     const [detailState, setDetailState] = useState<{ isOpen: boolean, order: any, statusData?: any }>({ isOpen: false, order: null });
+    const [ticketState, setTicketState] = useState<{ isOpen: boolean, order: any }>({ isOpen: false, order: null });
     const [searchTerm, setSearchTerm] = useState('');
     const [loadingAction, setLoadingAction] = useState<string | null>(null);
 
@@ -168,6 +172,13 @@ export default function SmmOrderTable({ orders }: SmmOrderTableProps) {
                 statusData={detailState.statusData}
             />
 
+            <TicketUserModal
+                isOpen={ticketState.isOpen}
+                onClose={() => setTicketState({ isOpen: false, order: null })}
+                order={ticketState.order}
+                userId={userId}
+            />
+
             {/* Search Bar */}
             <div className="relative z-0">
                 <input
@@ -243,6 +254,13 @@ export default function SmmOrderTable({ orders }: SmmOrderTableProps) {
                                                     {loadingAction === `refill-${item.id}` ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                                                 </button>
                                             )}
+                                            <button
+                                                onClick={() => setTicketState({ isOpen: true, order: item })}
+                                                className="p-1.5 rounded-lg bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+                                                title="Bantuan / Komplain"
+                                            >
+                                                <MessageCircle className="w-4 h-4" />
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -304,6 +322,13 @@ export default function SmmOrderTable({ orders }: SmmOrderTableProps) {
                                     Refill
                                 </button>
                             )}
+                            <button
+                                onClick={() => setTicketState({ isOpen: true, order: item })}
+                                className="py-2 px-4 rounded-lg bg-indigo-50 text-indigo-600 font-bold text-xs flex items-center justify-center gap-2 hover:bg-indigo-100"
+                            >
+                                <MessageCircle className="w-3 h-3" />
+                                Bantuan
+                            </button>
                         </div>
                     </div>
                 )) : (
