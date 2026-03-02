@@ -78,7 +78,7 @@ async function getFooterConfig() {
                             { label: "Tentang Kami", url: "/info/about" },
                             { label: "Cara Beli", "url": "/info/how-to-buy" },
                             { label: "FAQ", "url": "/info/faq" },
-                            { label: "Blog", "url": "/info/blog" }
+                            { label: "Blog", "url": "/blog" }
                         ]
                     },
                     {
@@ -117,7 +117,7 @@ async function getFooterConfig() {
                     { label: "Tentang Kami", url: "/info/about" },
                     { label: "Cara Beli", "url": "/info/how-to-buy" },
                     { label: "FAQ", "url": "/info/faq" },
-                    { label: "Blog", "url": "/info/blog" }
+                    { label: "Blog", "url": "/blog" }
                 ]
             },
             {

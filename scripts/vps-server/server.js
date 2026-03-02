@@ -191,3 +191,125 @@ app.get('/vps-cron/sync-all', requireSecret, async (req, res) => {
         console.log('--- FINISHED SEQUENTIAL UNIFIED SYNC ---');
     })();
 });
+
+/**
+ * ==========================================
+ * VAK-SMS & OTP BACKGROUND AUTO-CATCHER
+ * 10-Second High-Concurrency Looping
+ * ==========================================
+ */
+let isCheckingOTP = false;
+let otpCheckInterval = null;
+
+async function checkPendingOTP() {
+    if (isCheckingOTP) return;
+    isCheckingOTP = true;
+
+    try {
+        const configRes = await turso.execute({ sql: "SELECT content FROM SiteContent WHERE slug = 'vaksms_api_key'", args: [] });
+        const apiKey = configRes.rows[0]?.content;
+
+        if (!apiKey) {
+            isCheckingOTP = false;
+            return;
+        }
+
+        const pendingRes = await turso.execute({
+            sql: `SELECT id, userId, apiIdNum, phoneNumber, userPrice, createdAt FROM VirtualNumberOrder WHERE status = 'WAITING'`,
+            args: []
+        });
+
+        const pendingOrders = pendingRes.rows;
+        if (pendingOrders.length === 0) {
+            isCheckingOTP = false;
+            return;
+        }
+
+        const now = Date.now();
+        const MIN_5_IN_MS = 5 * 60 * 1000;
+
+        const batchSize = 20;
+        for (let i = 0; i < pendingOrders.length; i += batchSize) {
+            const chunk = pendingOrders.slice(i, i + batchSize);
+
+            for (const order of chunk) {
+                // Konversi tanggal ke milliseconds yang akurat untuk perbandingan
+                const orderDate = new Date(order.createdAt).getTime();
+                const isExpired = (now - orderDate) >= MIN_5_IN_MS;
+
+                if (isExpired) {
+                    // --- EXPIRED (Gagal Dapat SMS dalam 5 Menit -> Auto Refund) ---
+                    console.log(`[OTP] Cancelling expired order ${order.id}`);
+                    try {
+                        await axios.get(`https://moresms.net/api/setStatus/?apiKey=${apiKey}&status=end&idNum=${order.apiIdNum}`);
+                    } catch (e) { /* Abaikan error VAK jika koneksi terputus */ }
+
+                    const userRes = await turso.execute({ sql: "SELECT balance FROM User WHERE id = ?", args: [order.userId] });
+                    const currentBalance = Number(userRes.rows[0]?.balance || 0);
+                    const newBalance = currentBalance + Number(order.userPrice);
+                    const refId = `CANCEL-${order.id}`;
+
+                    // Generate random Hash ID untuk WalletTransaction (Meniru CUID style yang unik)
+                    const trxId = crypto.randomBytes(12).toString('hex');
+
+                    await turso.batch([
+                        {
+                            sql: `UPDATE User SET balance = ? WHERE id = ?`,
+                            args: [newBalance, order.userId]
+                        },
+                        {
+                            sql: `UPDATE VirtualNumberOrder SET status = 'CANCELLED', updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                            args: [order.id]
+                        },
+                        {
+                            sql: `INSERT INTO WalletTransaction (id, userId, type, amount, balanceBefore, balanceAfter, referenceId, description, status, createdAt)
+                                  VALUES (?, ?, 'CREDIT', ?, ?, ?, ?, ?, 'SUCCESS', CURRENT_TIMESTAMP)`,
+                            args: [trxId, order.userId, Number(order.userPrice), currentBalance, newBalance, refId, `Refund Otomatis Timeout OTP (${order.phoneNumber})`]
+                        }
+                    ], 'write');
+                } else {
+                    // --- ORDER MASIH HIDUP (Minta Kode OTP ke Satelit VAK-SMS) ---
+                    try {
+                        const statusRes = await axios.get(`https://moresms.net/api/getSmsCode/?apiKey=${apiKey}&idNum=${order.apiIdNum}`);
+                        const apiData = statusRes.data;
+
+                        // Jika apiData JSON mengembalikan 'smsCode'
+                        if (apiData.smsCode) {
+                            console.log(`[OTP] SMS Found for ${order.id}: ${apiData.smsCode}`);
+                            await turso.execute({
+                                sql: `UPDATE VirtualNumberOrder SET status = 'SUCCESS', smsCode = ?, updatedAt = CURRENT_TIMESTAMP WHERE id = ?`,
+                                args: [apiData.smsCode, order.id]
+                            });
+                        }
+                    } catch (e) {
+                        // Rate limit terjadi? Abaikan, sirkuit akan me-restart looping
+                    }
+                }
+
+                // --- ANTI-DDOS BAN PROTECTION (Jeda 50ms per panggilan API VAK-SMS) ---
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+        }
+    } catch (error) {
+        console.error(`[OTP LOOP ERROR]:`, error.message);
+    } finally {
+        isCheckingOTP = false;
+    }
+}
+
+function startOTPLoop() {
+    if (otpCheckInterval) clearInterval(otpCheckInterval);
+    console.log(`[OTP DAEMON] Starting 10-Second High-Frequency Poller...`);
+    otpCheckInterval = setInterval(checkPendingOTP, 10 * 1000);
+}
+
+// ENDPOINT /vps-cron/otp-ping UNTUK CRON-JOB.ORG
+app.get('/vps-cron/otp-ping', requireSecret, (req, res) => {
+    // Sebagai penjaga alarm jika sewaktu-waktu PM2 di VPS nyangkut.
+    console.log(`[PING] Received wake-up call for OTP Loop from Cron-job.org...`);
+    startOTPLoop();
+    res.status(200).json({ status: `OTP Poller is running and actively guarding 5-minute transactions.` });
+});
+
+// START LOOP PERTAMA KALI SAAT VPS BOOT
+startOTPLoop();

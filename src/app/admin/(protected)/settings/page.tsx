@@ -13,6 +13,7 @@ export default function SettingsPage() {
     const [openRouterModel, setOpenRouterModel] = useState('');
     const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
     const [turnstileSecretKey, setTurnstileSecretKey] = useState('');
+    const [imgbbApiKey, setImgbbApiKey] = useState('');
 
     // Visibility Toggles
     const [showTurnstileSecret, setShowTurnstileSecret] = useState(false);
@@ -29,6 +30,7 @@ export default function SettingsPage() {
                 setOpenRouterModel(data.openRouterModel || 'deepseek/deepseek-r1-0528:free');
                 setTurnstileSiteKey(data.turnstileSiteKey || '');
                 setTurnstileSecretKey(data.turnstileSecretKey || '');
+                setImgbbApiKey(data.imgbbApiKey || '');
                 setLoading(false);
             });
     }, []);
@@ -45,7 +47,8 @@ export default function SettingsPage() {
                     openRouterApiKey,
                     openRouterModel,
                     turnstileSiteKey,
-                    turnstileSecretKey
+                    turnstileSecretKey,
+                    imgbbApiKey
                 })
             });
             if (res.ok) {
@@ -150,6 +153,35 @@ export default function SettingsPage() {
                             </div>
                             <p className="text-xs text-gray-500 mt-2">
                                 Leave default or choose a free model.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Cloud Storage & Blog Configuration */}
+                <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
+                    <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                        <div className="p-2 bg-emerald-50 rounded-lg">
+                            <Key className="w-5 h-5 text-emerald-600" />
+                        </div>
+                        Storage & Blog Settings
+                    </h2>
+
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">ImgBB API Key (Blog Images)</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={imgbbApiKey}
+                                    onChange={e => setImgbbApiKey(e.target.value)}
+                                    placeholder="cf41a1b..."
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                />
+                                <Key className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                Free image hosting API for the Blog Editor. Get it from <a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline">api.imgbb.com</a>.
                             </p>
                         </div>
                     </div>

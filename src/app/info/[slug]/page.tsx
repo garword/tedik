@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
 import Footer from "@/components/layout/Footer";
+import SiteContentRenderer from "@/components/features/info/SiteContentRenderer";
 
 interface PageProps {
     params: Promise<{
@@ -39,10 +40,7 @@ export default async function InfoPage({ params }: PageProps) {
                         <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-8 pb-6 border-b border-gray-100 dark:border-white/10">
                             {page.title}
                         </h1>
-                        <div
-                            className="prose prose-emerald max-w-none text-gray-600 dark:text-gray-300 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: page.content }}
-                        />
+                        <SiteContentRenderer rawContent={page.content} />
                     </div>
                 </div>
             </div>

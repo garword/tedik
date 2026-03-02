@@ -9,7 +9,10 @@ import TrustSection from '@/components/sections/TrustSection';
 import Footer from '@/components/layout/Footer';
 import SectionHeader from '@/components/ui/SectionHeader';
 import ServiceOfflineView from '@/components/ui/ServiceOfflineView';
-import OTPDashboard from '@/app/otp/OTPDashboard'; export const dynamic = 'force-dynamic';
+import OTPDashboard from '@/app/otp/OTPDashboard';
+import AnnouncementPopup from '@/components/features/announcement/AnnouncementPopup';
+
+export const dynamic = 'force-dynamic';
 
 export default async function Home({
   searchParams,
@@ -279,6 +282,9 @@ export default async function Home({
   return (
     <>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 min-h-screen">
+        {/* Pop-up Pengumuman - Hanya di halaman utama */}
+        <AnnouncementPopup />
+
         {/* Hero Section */}
         {!params.q && !params.category && <HeroSection banners={serializedBanners} heroText={heroText} />}
 

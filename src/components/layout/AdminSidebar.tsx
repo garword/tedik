@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
     LayoutDashboard, ShoppingCart, Activity, Gamepad2, CreditCard,
-    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag, MessageCircle
+    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag, MessageCircle, PenTool, Megaphone
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -277,6 +277,62 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                         <MessageCircle size={18} />
                         <span>Tiket SMM</span>
                     </Link>
+
+                    {/* Pengumuman */}
+                    <Link
+                        href="/admin/announcements"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-sm mt-1 ${pathname === '/admin/announcements'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                    >
+                        <Megaphone size={18} />
+                        <span>Pengumuman</span>
+                    </Link>
+                </div>
+
+                {/* ARTIKEL & BLOG Section */}
+                <div className="mb-6">
+                    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider px-3 mb-2">CONTENT & SEO</p>
+
+                    <div className="mb-1">
+                        <button
+                            onClick={() => toggleSection('blog-cms')}
+                            className="w-full flex items-center justify-between px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+                        >
+                            <div className="flex items-center gap-3">
+                                <PenTool size={18} />
+                                <span className={expandedSections.includes('blog-cms') ? 'text-gray-900' : ''}>Artikel & Blog</span>
+                            </div>
+                            {expandedSections.includes('blog-cms') ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                        </button>
+                        {expandedSections.includes('blog-cms') && (
+                            <div className="ml-4 pl-4 border-l border-gray-200 mt-1 space-y-1">
+                                <Link
+                                    href="/admin/blog"
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                >
+                                    Semua Artikel
+                                </Link>
+                                <Link
+                                    href="/admin/blog/categories"
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                >
+                                    Kategori
+                                </Link>
+                                <Link
+                                    href="/admin/blog/tags"
+                                    onClick={() => setIsMobileOpen(false)}
+                                    className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                >
+                                    Tags SEO
+                                </Link>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* DESAIN Section */}
@@ -320,15 +376,15 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                     </Link>
 
                     <Link
-                        href="/admin/content/pages"
+                        href="/admin/content"
                         onClick={() => setIsMobileOpen(false)}
-                        className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive('/admin/content/pages')
+                        className={`flex items-center space-x-3 px-3 py-2.5 rounded-xl transition-all duration-200 group ${isActive('/admin/content')
                             ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
                             : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <FileText size={18} />
-                        <span className="text-sm">Pages</span>
+                        <span className="text-sm">Halaman</span>
                     </Link>
                 </div>
 
@@ -383,13 +439,47 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                                 >
                                     Setting CS
                                 </Link>
-                                <Link
-                                    href="/admin/settings/payment-gateway"
-                                    onClick={() => setIsMobileOpen(false)}
-                                    className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                >
-                                    Payment Gateway
-                                </Link>
+                                <div className="mb-1">
+                                    <button
+                                        onClick={(e) => { e.preventDefault(); toggleSection('payment-gateway'); }}
+                                        className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors text-left"
+                                    >
+                                        <span>Payment Gateway</span>
+                                        {expandedSections.includes('payment-gateway') ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                    </button>
+                                    {expandedSections.includes('payment-gateway') && (
+                                        <div className="ml-4 mt-1 space-y-1 relative before:absolute before:left-[-14px] before:top-2 before:bottom-2 before:w-[2px] before:bg-slate-300">
+                                            <Link
+                                                href="/admin/settings/payment-gateway"
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                            >
+                                                Overview
+                                            </Link>
+                                            <Link
+                                                href="/admin/settings/payment-gateway/pakasir"
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                            >
+                                                Pak Kasir
+                                            </Link>
+                                            <Link
+                                                href="/admin/settings/payment-gateway/duitku"
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                            >
+                                                Duitku
+                                            </Link>
+                                            <Link
+                                                href="/admin/settings/topup-icon"
+                                                onClick={() => setIsMobileOpen(false)}
+                                                className="block px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                            >
+                                                Topup Icon
+                                            </Link>
+                                        </div>
+                                    )}
+                                </div>
                                 <Link
                                     href="/admin/settings/tiers"
                                     onClick={() => setIsMobileOpen(false)}

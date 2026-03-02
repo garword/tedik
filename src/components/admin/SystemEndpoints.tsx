@@ -43,6 +43,16 @@ export default function SystemEndpoints({ cronSecret = 'ganti_di_env_cron_secret
             name: 'APIGames Webhook',
             url: `${baseUrl}/api/webhooks/apigames`,
             description: 'Endpoint untuk menerima notifikasi callback dari APIGames (Topup Games)'
+        },
+        {
+            name: 'Duitku Callback',
+            url: `${baseUrl}/api/webhooks/duitku`,
+            description: 'Endpoint untuk menerima notifikasi webhook callback dari Duitku Payment Gateway'
+        },
+        {
+            name: 'VPS Poller: OTP Ping (Cron)',
+            url: `${baseUrl}/vps-cron/otp-ping?secret=${cronSecret}`,
+            description: 'Endpoint "Wake-Up" dari cron-job.org untuk menjaga putaran pengecek SMS VAK-SMS (Setiap 10 Detik) di VPS tetap hidup jika terjadi crash (Disarankan: Cron setiap 3-5 Menit)'
         }
     ];
 

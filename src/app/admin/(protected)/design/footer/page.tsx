@@ -8,7 +8,13 @@ import {
     Twitter, Phone, MapPin, Globe // Keep for UI or default icons mapping if any
 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { IconProp } from "@fortawesome/fontawesome-svg-core";
+import { IconProp, library } from "@fortawesome/fontawesome-svg-core";
+import { fas } from '@fortawesome/free-solid-svg-icons';
+import { fab } from '@fortawesome/free-brands-svg-icons';
+import { far } from '@fortawesome/free-regular-svg-icons';
+
+// Make sure icons are available
+library.add(fas, fab, far);
 
 // Helper to convert class names (fa-brands fa-instagram) to IconProp
 const getIconProp = (name: string): IconProp => {
@@ -55,10 +61,12 @@ const getIconProp = (name: string): IconProp => {
 const SafeIcon = ({ icon, className }: { icon: string, className?: string }) => {
     try {
         const iconProp = getIconProp(icon);
+        // We'll render it safely. If it's completely invalid, FA might still throw
+        // but `library.add` above should reduce unmapped icons, and we'll fallback to Lucide Ghost or generic icon
         return <FontAwesomeIcon icon={iconProp} className={className} />;
     } catch (error) {
-        // Fallback to question mark if icon fails to load
-        return <FontAwesomeIcon icon={['fas', 'circle-question']} className={className} />;
+        // Fallback to question mark if icon fails to parse
+        return <Globe className={className} />;
     }
 };
 
@@ -470,10 +478,9 @@ export default function FooterDesignPage() {
                                     <p className="text-sm text-gray-600 leading-relaxed">{config.description || "Deskripsi akan muncul disini..."}</p>
                                     <div className="flex gap-3 mt-3">
                                         {config.socials.map((social, idx) => {
-                                            const iconProp = getIconProp(social.icon);
                                             return (
                                                 <div key={idx} className={`p-2 rounded-full bg-gray-100 text-gray-600`}>
-                                                    <FontAwesomeIcon icon={iconProp} className="text-base" />
+                                                    <SafeIcon icon={social.icon} className="text-base" />
                                                 </div>
                                             );
                                         })}

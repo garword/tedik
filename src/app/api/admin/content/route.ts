@@ -10,6 +10,16 @@ export async function GET(req: NextRequest) {
     if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const content = await prisma.siteContent.findMany({
+        where: {
+            NOT: {
+                OR: [
+                    { slug: { contains: 'vaksms_' } },
+                    { slug: { contains: '_key' } },
+                    { slug: { contains: '_secret' } },
+                    { slug: { contains: 'turnstile_' } }
+                ]
+            }
+        },
         orderBy: { slug: 'asc' }
     });
     return NextResponse.json(content);

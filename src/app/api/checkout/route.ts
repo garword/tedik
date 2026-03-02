@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/session';
 import { randomBytes } from 'crypto';
 import { getPakasirConfig, createPakasirTransaction } from '@/lib/pakasir';
+import { getDuitkuConfig, createDuitkuTransaction } from '@/lib/duitku';
 import { getTierPriceMap } from '@/lib/tiers';
 
 export const dynamic = 'force-dynamic';
@@ -178,33 +179,69 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ error: 'Saldo tidak mencukupi' }, { status: 400 });
             }
         } else {
-            // Pakasir Logic (Existing)
-            const gatewayConfig = await getPakasirConfig();
+            // Check active gateway
+            const activeSetting = await prisma.siteSetting.findUnique({
+                where: { key: 'active_payment_gateway' }
+            });
+            const activeGatewayStr = activeSetting?.value || 'pakasir';
 
-            if (gatewayConfig && gatewayConfig.isActive) {
-                // Calculate Fee (ensure integers for Pakasir)
-                const feePercent = (amountAfterDiscount * gatewayConfig.feePercentage) / 100;
-                const feeFixed = Number(gatewayConfig.feeFixed);
-                gatewayFee = Math.round(feePercent + feeFixed);
-                totalAmount = Math.round(amountAfterDiscount + gatewayFee);
+            if (activeGatewayStr === 'duitku') {
+                const gatewayConfig = await getDuitkuConfig();
+                if (gatewayConfig && gatewayConfig.isActive) {
+                    const feePercent = (amountAfterDiscount * gatewayConfig.feePercentage) / 100;
+                    const feeFixed = Number(gatewayConfig.feeFixed);
+                    gatewayFee = Math.round(feePercent + feeFixed);
+                    totalAmount = Math.round(amountAfterDiscount + gatewayFee);
 
-                // Call Pakasir API
-                const pakasirRes = await createPakasirTransaction(gatewayConfig, {
-                    orderId: invoiceCode,
-                    amount: totalAmount
-                });
+                    const duitkuRes = await createDuitkuTransaction(gatewayConfig, {
+                        orderId: invoiceCode,
+                        amount: totalAmount,
+                        email: user.email || 'customer@example.com',
+                        customerVaName: user.name || 'Customer',
+                        callbackUrl: `${req.nextUrl.origin}/api/webhooks/duitku`,
+                        returnUrl: `${req.nextUrl.origin}/user/orders`
+                    });
 
-                if (pakasirRes?.payment?.payment_number) {
-                    qrisString = pakasirRes.payment.payment_number;
-                    // Force 10-minute expiry for UI countdown
-                    expiredAt = new Date(Date.now() + 10 * 60 * 1000);
+                    if (duitkuRes?.statusCode === '00' && (duitkuRes.qrString || duitkuRes.paymentUrl)) {
+                        qrisString = duitkuRes.qrString || duitkuRes.paymentUrl;
+                        expiredAt = new Date(Date.now() + 60 * 60 * 1000); // 60 mins expiry
+                        paymentMethodDb = 'duitku-qris';
+                    } else {
+                        console.error('Duitku Error:', duitkuRes);
+                        return NextResponse.json({ error: 'Failed to generate Duitku transaction' }, { status: 500 });
+                    }
                 } else {
-                    console.error('Pakasir Error:', pakasirRes);
-                    return NextResponse.json({ error: 'Failed to generate QRIS' }, { status: 500 });
+                    return NextResponse.json({ error: 'Payment Gateway Duitku Unavailable' }, { status: 503 });
                 }
             } else {
-                // Return Error if Payment Gateway Unavailable
-                return NextResponse.json({ error: 'Payment Gateway Unavailable' }, { status: 503 });
+                // Pakasir Logic (Existing)
+                const gatewayConfig = await getPakasirConfig();
+
+                if (gatewayConfig && gatewayConfig.isActive) {
+                    // Calculate Fee (ensure integers for Pakasir)
+                    const feePercent = (amountAfterDiscount * gatewayConfig.feePercentage) / 100;
+                    const feeFixed = Number(gatewayConfig.feeFixed);
+                    gatewayFee = Math.round(feePercent + feeFixed);
+                    totalAmount = Math.round(amountAfterDiscount + gatewayFee);
+
+                    // Call Pakasir API
+                    const pakasirRes = await createPakasirTransaction(gatewayConfig, {
+                        orderId: invoiceCode,
+                        amount: totalAmount
+                    });
+
+                    if (pakasirRes?.payment?.payment_number) {
+                        qrisString = pakasirRes.payment.payment_number;
+                        // Force 10-minute expiry for UI countdown
+                        expiredAt = new Date(Date.now() + 10 * 60 * 1000);
+                    } else {
+                        console.error('Pakasir Error:', pakasirRes);
+                        return NextResponse.json({ error: 'Failed to generate QRIS' }, { status: 500 });
+                    }
+                } else {
+                    // Return Error if Payment Gateway Unavailable
+                    return NextResponse.json({ error: 'Payment Gateway Unavailable' }, { status: 503 });
+                }
             }
         }
 

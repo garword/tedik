@@ -13,6 +13,7 @@ export async function GET() {
     const openRouterModelConfig = await prisma.siteContent.findUnique({ where: { slug: 'openrouter_model' } });
     const turnstileSiteConfig = await prisma.siteContent.findUnique({ where: { slug: 'turnstile_site_key' } });
     const turnstileSecretConfig = await prisma.siteContent.findUnique({ where: { slug: 'turnstile_secret_key' } });
+    const imgbbConfig = await prisma.siteContent.findUnique({ where: { slug: 'imgbb_api_key' } });
 
     return NextResponse.json({
         geminiApiKey: geminiConfig?.content || '',
@@ -20,6 +21,7 @@ export async function GET() {
         openRouterModel: openRouterModelConfig?.content || '',
         turnstileSiteKey: turnstileSiteConfig?.content || '',
         turnstileSecretKey: turnstileSecretConfig?.content || '',
+        imgbbApiKey: imgbbConfig?.content || '',
     });
 }
 
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const { geminiApiKey, openRouterApiKey, openRouterModel, turnstileSiteKey, turnstileSecretKey } = await req.json();
+        const { geminiApiKey, openRouterApiKey, openRouterModel, turnstileSiteKey, turnstileSecretKey, imgbbApiKey } = await req.json();
 
         if (geminiApiKey !== undefined) {
             await prisma.siteContent.upsert({
@@ -70,7 +72,15 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        await logAdminAction(session.userId, 'UPDATE_SETTINGS', 'Updated AI API Keys');
+        if (imgbbApiKey !== undefined) {
+            await prisma.siteContent.upsert({
+                where: { slug: 'imgbb_api_key' },
+                update: { content: imgbbApiKey },
+                create: { slug: 'imgbb_api_key', title: 'ImgBB API Key', content: imgbbApiKey }
+            });
+        }
+
+        await logAdminAction(session.userId, 'UPDATE_SETTINGS', 'Updated Settings & API Keys');
 
         return NextResponse.json({ message: 'Settings saved' });
     } catch (error: any) {

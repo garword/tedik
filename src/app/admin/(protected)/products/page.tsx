@@ -233,7 +233,8 @@ export default function ProductsPage() {
     const initialForm = {
         name: '', slug: '', description: '', imageUrl: '', categoryId: '', isActive: true,
         instantDeliveryInfo: '', warrantyInfo: '', supportInfo: '',
-        ratingValue: 5.0, reviewCount: 100, soldCount: 0, wishlistCount: 0
+        ratingValue: 5.0, reviewCount: 100, soldCount: 0, wishlistCount: 0,
+        faqs: [] as { q: string, a: string }[]
     };
 
     const [form, setForm] = useState(initialForm);
@@ -337,10 +338,28 @@ export default function ProductsPage() {
             const method = editingId ? 'PUT' : 'POST';
             const url = editingId ? `/api/admin/products/${editingId}` : '/api/admin/products';
 
+            // Encode FAQs into description if they exist, to avoid database schema changes
+            let finalDescription = form.description;
+            if (form.faqs && form.faqs.length > 0) {
+                // remove empty FAQs before serializing
+                const validFaqs = form.faqs.filter(f => f.q.trim() !== '' || f.a.trim() !== '');
+                if (validFaqs.length > 0) {
+                    finalDescription = JSON.stringify({
+                        main: form.description,
+                        faqs: validFaqs
+                    });
+                }
+            }
+
+            const dataToSubmit = {
+                ...form,
+                description: finalDescription
+            };
+
             const res = await fetch(url, {
                 method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(form)
+                body: JSON.stringify(dataToSubmit)
             });
 
             if (res.ok) {
@@ -405,8 +424,21 @@ export default function ProductsPage() {
     };
 
     const openEdit = (p: Product) => {
+        let parsedDesc = p.description || '';
+        let parsedFaqs = [] as { q: string, a: string }[];
+
+        try {
+            if (p.description && p.description.trim().startsWith('{') && p.description.includes('"faqs"')) {
+                const parsed = JSON.parse(p.description);
+                parsedDesc = parsed.main || '';
+                parsedFaqs = parsed.faqs || [];
+            }
+        } catch (e) {
+            // It's normal text, fallback is parsedDesc = p.description
+        }
+
         setForm({
-            name: p.name, slug: p.slug, description: p.description,
+            name: p.name, slug: p.slug, description: parsedDesc,
             imageUrl: p.imageUrl || '', categoryId: p.categoryId, isActive: p.isActive,
             instantDeliveryInfo: p.instantDeliveryInfo || '',
             warrantyInfo: p.warrantyInfo || '',
@@ -414,7 +446,8 @@ export default function ProductsPage() {
             ratingValue: p.ratingValue ?? 5.0,
             reviewCount: p.reviewCount ?? 100,
             soldCount: p.soldCount ?? 0,
-            wishlistCount: p.wishlistCount ?? 0
+            wishlistCount: p.wishlistCount ?? 0,
+            faqs: parsedFaqs
         });
         setEditingId(p.id);
         setIsModalOpen(true);
@@ -1071,13 +1104,74 @@ export default function ProductsPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        <div className="space-y-1.5">
+                                        <div className="space-y-1.5 ">
                                             <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">Deskripsi</label>
                                             <textarea
                                                 value={form.description || ''} onChange={e => setForm({ ...form, description: e.target.value })}
                                                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition-all text-sm min-h-[80px]"
                                                 placeholder="Jelaskan detail produk..."
                                             />
+                                        </div>
+
+                                        {/* FAQ Section */}
+                                        <div className="space-y-3 pt-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+                                                    FAQ / Style Accordion (Opsional)
+                                                </label>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setForm({ ...form, faqs: [...form.faqs, { q: '', a: '' }] })}
+                                                    className="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1"
+                                                >
+                                                    <Plus size={14} /> Tambah Pertanyaan
+                                                </button>
+                                            </div>
+
+                                            <div className="space-y-3">
+                                                {form.faqs.map((faq, index) => (
+                                                    <div key={index} className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3 relative overflow-hidden group">
+                                                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 hidden group-hover:block"></div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setForm({ ...form, faqs: form.faqs.filter((_, i) => i !== index) })}
+                                                            className="absolute top-3 right-3 text-gray-400 hover:text-red-500 p-1.5 rounded-md hover:bg-white border border-transparent hover:border-gray-200 shadow-sm transition-all"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+
+                                                        <div className="pr-10">
+                                                            <input
+                                                                type="text"
+                                                                value={faq.q}
+                                                                onChange={e => {
+                                                                    const newFaqs = [...form.faqs];
+                                                                    newFaqs[index].q = e.target.value;
+                                                                    setForm({ ...form, faqs: newFaqs });
+                                                                }}
+                                                                placeholder="Pertanyaan..."
+                                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm font-bold bg-white mb-2"
+                                                            />
+                                                            <textarea
+                                                                value={faq.a}
+                                                                onChange={e => {
+                                                                    const newFaqs = [...form.faqs];
+                                                                    newFaqs[index].a = e.target.value;
+                                                                    setForm({ ...form, faqs: newFaqs });
+                                                                }}
+                                                                placeholder="Jawaban..."
+                                                                rows={2}
+                                                                className="w-full px-4 py-2 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none text-sm bg-white resize-y"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {form.faqs.length === 0 && (
+                                                    <div className="text-center py-6 bg-gray-50 border border-dashed border-gray-300 rounded-xl flex items-center justify-center flex-col gap-2">
+                                                        <span className="text-gray-400">Belum ada daftar pertanyaan FAQ.</span>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
 

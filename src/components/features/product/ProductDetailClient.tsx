@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { formatRupiah, cn, formatCompactNumber } from '@/lib/utils';
-import { ChevronLeft, ChevronRight, Minus, Plus, Search, Star, MessageCircle, Share2, ShieldCheck, Clock, Check, AlertCircle, ShoppingCart, CreditCard, User, Loader2, Repeat, FileText, Heart, BookOpen, Sparkles, Send, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Minus, Plus, Search, Star, MessageCircle, Share2, ShieldCheck, Clock, Check, AlertCircle, ShoppingCart, CreditCard, User, Loader2, Repeat, FileText, Heart, BookOpen, Sparkles, Send, X, ChevronDown } from "lucide-react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faTiktok, faYoutube, faFacebook, faTwitter, faSpotify, faTwitch, faDiscord, faTelegram, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import { faShoppingCart as faCartShopping, faUser } from '@fortawesome/free-solid-svg-icons'; // fallback
@@ -12,6 +12,52 @@ import { useToast } from '@/context/ToastContext';
 import PaymentModal from '@/components/features/payment/PaymentModal';
 import { getGameConfig } from '@/lib/game-config';
 import SmmTargetGuide from './SmmTargetGuide';
+
+// Accordion Component for FAQS
+const FaqAccordion = ({ faqs }: { faqs: { q: string, a: string }[] }) => {
+    const [openIndex, setOpenIndex] = useState<number | null>(null);
+    if (!faqs || faqs.length === 0) return null;
+
+    return (
+        <div className="mt-6 space-y-3">
+            <h4 className="font-bold text-gray-900 text-sm mb-3 flex items-center">
+                <MessageCircle className="w-4 h-4 mr-2 text-green-500" />
+                Pertanyaan Umum (FAQ)
+            </h4>
+            <div className="space-y-2">
+                {faqs.map((faq, idx) => (
+                    <div key={idx} className="bg-white rounded-xl border-2 border-dashed border-gray-200 overflow-hidden transition-all duration-300 hover:border-green-300">
+                        <button
+                            onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+                            className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left bg-gray-50/50 hover:bg-green-50/50 transition-colors"
+                        >
+                            <span className="font-bold text-gray-800 text-sm pr-4">
+                                {faq.q}
+                            </span>
+                            <div className={cn("p-1 rounded-full transition-transform duration-300 flex-shrink-0", openIndex === idx ? "bg-green-100 text-green-600 rotate-180" : "bg-gray-100 text-gray-400")}>
+                                <ChevronDown className="w-4 h-4" />
+                            </div>
+                        </button>
+                        <AnimatePresence>
+                            {openIndex === idx && (
+                                <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <div className="p-4 pt-0 text-sm text-gray-600 leading-relaxed border-t border-dashed border-gray-100 bg-white whitespace-pre-wrap">
+                                        {faq.a}
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 interface ProductDetailClientProps {
     product: any;
@@ -59,6 +105,22 @@ export default function ProductDetailClient({ product, user, tierName }: Product
     const selectedVariant = product.variants.find((v: any) => v.id === selectedVariantId);
     const gameConfig = getGameConfig(product.name, product.slug);
     const price = selectedVariant ? Number(selectedVariant.price) : product.minPrice;
+
+    // Parse Description for FAQs
+    const { mainDesc, faqs } = useMemo(() => {
+        let mainDesc = product.description || '';
+        let faqs: { q: string, a: string }[] = [];
+        try {
+            if (mainDesc && mainDesc.trim().startsWith('{') && mainDesc.includes('"faqs"')) {
+                const parsed = JSON.parse(mainDesc);
+                mainDesc = parsed.main || '';
+                faqs = parsed.faqs || [];
+            }
+        } catch (e) {
+            // keep default string
+        }
+        return { mainDesc, faqs };
+    }, [product.description]);
 
     // SMM Logic
     const isSmm = product.category?.type === 'SOSMED';
@@ -139,17 +201,8 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                 }
             }
 
-            // --- SMART AUTO-SYNC TRIGGER ---
-            // Run silently in background. If it returns { synced: true }, fresh data was pulled, refresh page.
-            fetch('/api/medanpedia/auto-sync')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success && data.synced) {
-                        console.log('[Medanpedia Auto-Sync] Fresh catalog data fetched. Refreshing page...');
-                        router.refresh();
-                    }
-                })
-                .catch(err => console.error('[Medanpedia Auto-Sync Error]', err));
+            // Removed silent auto-sync from here because syncing thousands of SMM services
+            // dynamically on client load blocks the Node.js event loop and causes severe lag.
         }
     }, [isSmm, product.variants, product.variants?.length]); // Added length check
 
@@ -600,8 +653,9 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                         </h3>
                                         <div
                                             className="text-gray-600 text-sm leading-relaxed"
-                                            dangerouslySetInnerHTML={{ __html: product.description || 'Pilih layanan yang sesuai dengan kebutuhan Anda pada form di samping.' }}
+                                            dangerouslySetInnerHTML={{ __html: mainDesc || 'Pilih layanan yang sesuai dengan kebutuhan Anda pada form di samping.' }}
                                         />
+                                        <FaqAccordion faqs={faqs} />
                                     </div>
                                 </div>
                             </div>
@@ -806,13 +860,14 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                     type="text"
                                                     value={target}
                                                     onChange={(e) => setTarget(e.target.value)}
+                                                    disabled={!selectedVariantId}
                                                     placeholder={
                                                         inputType === 'custom_comments' ? "Contoh: https://instagram.com/p/..." :
                                                             selectedSmmCategory.toLowerCase().includes('follows') || selectedSmmCategory.toLowerCase().includes('subscriber') ? "Contoh: Username (tanpa @) atau Link Profile" :
                                                                 "Contoh: https://instagram.com/p/... atau Username"
 
                                                     }
-                                                    className="w-full p-4 pl-12 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all"
+                                                    className="w-full p-4 pl-12 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                 />
                                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
                                                     <User className="w-5 h-5" />
@@ -830,6 +885,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                 <div className="relative">
                                                     <textarea
                                                         value={customComments}
+                                                        disabled={!selectedVariantId}
                                                         onChange={(e) => {
                                                             const val = e.target.value;
                                                             setCustomComments(val);
@@ -838,7 +894,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                             if (lines > 0) setQuantity(lines);
                                                         }}
                                                         placeholder="Isi komentar, pisahkan dengan baris baru (Enter).&#10;Keren banget!&#10;Mantap gan&#10;Nice picture"
-                                                        className="w-full p-4 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all h-32"
+                                                        className="w-full p-4 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all h-32 disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                     />
                                                 </div>
                                                 <p className="text-xs text-gray-400 ml-1">
@@ -855,13 +911,14 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                 <input
                                                     type="number"
                                                     value={quantity}
+                                                    disabled={!selectedVariantId || inputType === 'custom_comments'}
                                                     onChange={(e) => {
                                                         const val = e.target.value;
                                                         if (val === '') setQuantity('');
                                                         else setQuantity(Number(val));
                                                     }}
                                                     placeholder={isSmm ? "0" : "1"}
-                                                    className="w-full p-3 sm:p-4 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all font-bold text-gray-900 text-sm sm:text-base"
+                                                    className="w-full p-3 sm:p-4 rounded-xl border-2 border-gray-100 focus:outline-none focus:ring-0 focus:border-green-500 bg-white transition-all font-bold text-gray-900 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                 />
                                             </div>
                                             <div className="space-y-2">
@@ -1169,8 +1226,9 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                 </h3>
                                                 <div
                                                     className="text-gray-600 text-sm leading-relaxed"
-                                                    dangerouslySetInnerHTML={{ __html: product.description || '' }}
+                                                    dangerouslySetInnerHTML={{ __html: mainDesc || '' }}
                                                 />
+                                                <FaqAccordion faqs={faqs} />
                                             </div>
                                         </div>
 
@@ -1306,9 +1364,10 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                     <input
                                                                         type="text"
                                                                         value={target}
+                                                                        disabled={!selectedVariantId}
                                                                         onChange={(e) => { setTarget(e.target.value); setAccountInfo(null); }}
                                                                         placeholder={placeholderID}
-                                                                        className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white font-mono text-gray-900 shadow-sm transition-all"
+                                                                        className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white font-mono text-gray-900 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                                     />
                                                                 </div>
 
@@ -1320,9 +1379,10 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                         <input
                                                                             type="text"
                                                                             value={zoneId}
+                                                                            disabled={!selectedVariantId}
                                                                             onChange={(e) => { setZoneId(e.target.value); setAccountInfo(null); }}
                                                                             placeholder={placeholderZone}
-                                                                            className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white font-mono text-gray-900 shadow-sm transition-all"
+                                                                            className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 bg-white font-mono text-gray-900 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                                         />
                                                                     </div>
                                                                 )}
@@ -1430,9 +1490,10 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                 <input
                                                                     type="text"
                                                                     value={target}
+                                                                    disabled={!selectedVariantId}
                                                                     onChange={(e) => setTarget(e.target.value)}
                                                                     placeholder="Contoh: https://instagram.com/user atau @username"
-                                                                    className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 bg-white font-mono text-gray-900 shadow-sm transition-all"
+                                                                    className="w-full p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 bg-white font-mono text-gray-900 shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                                 />
                                                                 <p className="text-[10px] text-gray-400 ml-1">
                                                                     Pastikan akun <strong>tidak diprivate</strong>.
@@ -1454,12 +1515,13 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                     <input
                                                                         type="number"
                                                                         value={quantity}
+                                                                        disabled={!selectedVariantId}
                                                                         onChange={(e) => {
                                                                             const val = e.target.value;
                                                                             if (val === '') setQuantity('');
                                                                             else setQuantity(Math.max(1, Number(val)));
                                                                         }}
-                                                                        className="flex-1 p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 bg-white font-bold text-center text-gray-900 shadow-sm"
+                                                                        className="flex-1 p-3.5 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-pink-500/20 focus:border-pink-500 bg-white font-bold text-center text-gray-900 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                                                                     />
                                                                     <button
                                                                         onClick={() => setQuantity((Number(quantity) || 0) + 10)}
@@ -1470,7 +1532,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                 </div>
                                                                 <div className="flex gap-2 justify-center mt-2">
                                                                     {[100, 500, 1000, 2000].map(q => (
-                                                                        <button key={q} onClick={() => setQuantity(q)} className="text-xs bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-pink-50 hover:text-pink-600 transition-colors">
+                                                                        <button key={q} disabled={!selectedVariantId} onClick={() => setQuantity(q)} className="text-xs bg-white border border-gray-200 px-3 py-1 rounded-full hover:bg-pink-50 hover:text-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                                                                             {q}
                                                                         </button>
                                                                     ))}
@@ -1496,9 +1558,10 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                     <input
                                                         type="text"
                                                         value={target}
+                                                        disabled={!selectedVariantId}
                                                         onChange={(e) => setTarget(e.target.value)}
                                                         placeholder="Nomor HP / ID Pln / Email"
-                                                        className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 bg-gray-50 text-lg font-mono mb-4"
+                                                        className="w-full p-4 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/50 bg-gray-50 text-lg font-mono mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
                                                     />
                                                 </>
                                             )}
@@ -1514,7 +1577,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                             <div className="flex items-center border border-gray-200 rounded-xl bg-gray-50 p-1">
                                                                 <button
                                                                     onClick={() => setQuantity(Math.max(1, (Number(quantity) || 1) - 1))}
-                                                                    disabled={(Number(quantity) || 0) <= 1}
+                                                                    disabled={!selectedVariantId || (Number(quantity) || 0) <= 1}
                                                                     className="p-3 hover:bg-white rounded-lg transition-all disabled:opacity-50 text-gray-600"
                                                                 >
                                                                     <Minus className="w-4 h-4" />
@@ -1522,6 +1585,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                 <input
                                                                     type="number"
                                                                     value={quantity}
+                                                                    disabled={!selectedVariantId}
                                                                     onChange={(e) => {
                                                                         const val = parseInt(e.target.value);
                                                                         if (!isNaN(val) && val >= 1) {
@@ -1534,7 +1598,7 @@ export default function ProductDetailClient({ product, user, tierName }: Product
                                                                             if (val <= max) setQuantity(val);
                                                                         }
                                                                     }}
-                                                                    className="w-24 text-center bg-transparent font-bold text-gray-900 focus:outline-none border border-gray-300 rounded-lg mx-1 py-1"
+                                                                    className="w-24 text-center bg-transparent font-bold text-gray-900 focus:outline-none border border-gray-300 rounded-lg mx-1 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                                                 />
                                                                 <button
                                                                     onClick={() => setQuantity((Number(quantity) || 0) + 1)}
