@@ -5,28 +5,25 @@ import { refundOrder } from '@/lib/refund';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+const CRON_SECRET = process.env.CRON_SECRET;
+
+export async function GET(req: Request) {
+    // 🔒 Auth Check — harus ada header Authorization: Bearer <CRON_SECRET>
+    const authHeader = (req as any).headers?.get('authorization') ?? '';
+    if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     try {
         // 1. Find Stale Orders
-        // Criteria: Status is PENDING or PROCESSING
-        // CreatedAt is older than 10 minutes
         const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
         const staleOrders = await prisma.order.findMany({
             where: {
                 status: { in: ['PENDING', 'PROCESSING'] },
                 createdAt: { lt: tenMinutesAgo },
-                // paymentMethod: { not: 'manual' } // Only auto-refund automated payments?
-                // User said "Topup Game... if > 10 mins refund". 
-                // Mostly this applies to paid orders that are stuck.
-                // If paymentMethod is Qris and IT IS PAID (status PROCESSING), then refund.
-                // If status is PENDING and Payment is Qris, it might just be unpaid. We should CANCEL unpaid orders but NOT refund (user didn't pay).
-                // Wait. PENDING usually means "Waiting for Payment" in my system (from Deposit/Checkout logic).
-                // PROCESSING means "Paid, waiting for provider".
-                // So checking "PROCESSING" is the key for refunds.
-                // "PENDING" orders older than 10 mins should just be CANCELED (Expiry), no refund.
             },
-            take: 50 // Batch size
+            take: 50
         });
 
         const results = {
@@ -40,12 +37,10 @@ export async function GET() {
             results.processed++;
 
             if (order.status === 'PROCESSING') {
-                // Paid but stuck -> REFUND
                 const res = await refundOrder(order.id, 'Timeout > 10 Minutes (Auto Refund)');
                 if (res.success) results.refunded++;
                 else results.errors++;
             } else if (order.status === 'PENDING') {
-                // Unpaid and expired -> CANCEL (No Refund)
                 await prisma.order.update({
                     where: { id: order.id },
                     data: { status: 'CANCELED' }

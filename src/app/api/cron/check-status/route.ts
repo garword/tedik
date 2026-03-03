@@ -8,7 +8,15 @@ import { refundOrder } from '@/lib/refund';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // 1 minute max
 
+const CRON_SECRET = process.env.CRON_SECRET;
+
 export async function GET(req: Request) {
+    // Proteksi cron: harus ada header Authorization: Bearer <CRON_SECRET>
+    const authHeader = (req as any).headers?.get('authorization') ?? '';
+    if (!CRON_SECRET || authHeader !== `Bearer ${CRON_SECRET}`) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     console.log('[Cron] Starting Background Status Check...');
     const logs: string[] = [];
 

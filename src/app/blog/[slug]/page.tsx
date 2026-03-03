@@ -111,16 +111,23 @@ export default async function BlogPostPage({ params }: Props) {
         '@context': 'https://schema.org',
         '@type': 'NewsArticle',
         headline: post.title,
+        description: post.excerpt,
         image: [
-            post.thumbnailUrl || 'https://domainanda.com/logo.png'
+            post.thumbnailUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://example.com'}/logo.png`
         ],
         datePublished: post.createdAt?.toISOString(),
         dateModified: post.updatedAt.toISOString(),
         author: [{
             '@type': 'Person',
             name: 'Admin',
-            url: 'https://domainanda.com/about'
-        }]
+            url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://example.com'}/info/about`
+        }],
+        publisher: {
+            '@type': 'Organization',
+            name: post.category?.name || 'Blog',
+        },
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://example.com'}/blog/${post.slug}`,
+        mainEntityOfPage: `${process.env.NEXT_PUBLIC_APP_URL || 'https://example.com'}/blog/${post.slug}`,
     };
 
     return (

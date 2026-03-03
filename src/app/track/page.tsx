@@ -5,6 +5,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, FileText } from 'lucide-react';
 
+// Note: 'use client' pages can't export metadata directly.
+// Track page metadata is inherited from layout via template: 'Lacak Pesanan | {siteName}'
+
+
 export default function TrackPage() {
     const [invoiceCode, setInvoiceCode] = useState('');
     const router = useRouter();

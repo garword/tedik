@@ -1,6 +1,18 @@
 
 import React from 'react';
 import { ShoppingCart, CreditCard, CheckCircle, Search } from 'lucide-react';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+    title: 'Panduan Cara Beli',
+    description: 'Cara mudah berbelanja produk digital: pilih produk, bayar dengan QRIS/e-wallet, dan terima produk instan. Proses cepat 1-3 menit.',
+    openGraph: {
+        title: 'Panduan Cara Beli Produk Digital',
+        description: 'Cara mudah belanja produk digital, top up game, dan layanan digital lainnya. Bayar pakai QRIS, Dana, OVO, GoPay.',
+        type: 'website',
+    },
+};
+
 
 export default function GuidePage() {
     const steps = [

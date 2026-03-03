@@ -2,11 +2,20 @@ import { Metadata } from 'next';
 import prisma from '@/lib/prisma';
 import Footer from '@/components/layout/Footer';
 import BlogListClient from '@/components/features/blog/BlogListClient';
+import { getSeoConfig } from '@/lib/seo';
 
-export const metadata: Metadata = {
-    title: 'Blog & Artikel Edukasi | Nama Toko Anda',
-    description: 'Kumpulan artikel, tutorial, dan berita seputar dunia digital dan optimasi dari kami.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+    const seo = await getSeoConfig();
+    return {
+        title: 'Blog & Artikel Edukasi',
+        description: `Kumpulan artikel, tutorial, dan berita seputar dunia digital dari ${seo.siteName}. Update setiap minggu.`,
+        openGraph: {
+            title: `Blog & Artikel | ${seo.siteName}`,
+            description: `Kumpulan artikel, tutorial, dan berita seputar dunia digital dari ${seo.siteName}.`,
+            type: 'website',
+        },
+    };
+}
 
 export default async function BlogIndexPage() {
     // Ambil artikel yang hanya isPublished = true

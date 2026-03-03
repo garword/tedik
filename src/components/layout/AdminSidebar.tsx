@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
     LayoutDashboard, ShoppingCart, Activity, Gamepad2, CreditCard,
-    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag, MessageCircle, PenTool, Megaphone
+    Smartphone, Share2, Settings, LogOut, Menu, X, ChevronDown, ChevronRight, Image as ImageIcon, LayoutTemplate, FileText, UserCog, Tag, MessageCircle, PenTool, Megaphone, Search
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -333,6 +333,23 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                             </div>
                         )}
                     </div>
+
+                    {/* SEO Settings — Dedicated Menu */}
+                    <Link
+                        href="/admin/seo"
+                        onClick={() => setIsMobileOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-sm ${pathname === '/admin/seo'
+                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
+                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            }`}
+                    >
+                        <div className={`p-1 rounded-md ${pathname === '/admin/seo' ? 'bg-emerald-100' : 'bg-gray-100'
+                            }`}>
+                            <Search size={14} className={pathname === '/admin/seo' ? 'text-emerald-600' : 'text-gray-500'} />
+                        </div>
+                        <span>SEO Settings</span>
+                        <span className="ml-auto text-[9px] font-bold bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full">NEW</span>
+                    </Link>
                 </div>
 
                 {/* DESAIN Section */}

@@ -3,11 +3,40 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { comparePassword } from '@/lib/auth';
 import { login } from '@/lib/session';
-import { generateOtp } from '@/lib/utils';
-import { sendOtpEmail } from '@/lib/mailer';
+
+export const dynamic = 'force-dynamic';
+
+// 🔒 Rate Limiting: max 5 percobaan per 15 menit per IP
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function getClientIp(req: NextRequest): string {
+    return (
+        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') ||
+        '127.0.0.1'
+    );
+}
 
 export async function POST(req: NextRequest) {
     try {
+        // Rate limit check
+        const ip = getClientIp(req);
+        const now = Date.now();
+        let record = loginAttempts.get(ip);
+
+        if (record && now > record.resetAt) {
+            loginAttempts.delete(ip);
+            record = undefined;
+        }
+
+        if (record && record.count >= 5) {
+            const waitSecs = Math.ceil((record.resetAt - now) / 1000);
+            return NextResponse.json(
+                { error: `Terlalu banyak percobaan login. Coba lagi setelah ${waitSecs} detik.` },
+                { status: 429 }
+            );
+        }
+
         const body = await req.json();
         const { email, password } = body;
 
@@ -17,9 +46,12 @@ export async function POST(req: NextRequest) {
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user) {
+            // Increment attempt even on "user not found" to prevent user enumeration
+            const r = loginAttempts.get(ip) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+            r.count++;
+            loginAttempts.set(ip, r);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
-
 
         if (!user.passwordHash) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -27,20 +59,14 @@ export async function POST(req: NextRequest) {
 
         const isValid = await comparePassword(password, user.passwordHash);
         if (!isValid) {
+            const r = loginAttempts.get(ip) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+            r.count++;
+            loginAttempts.set(ip, r);
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Set Session Cookie
-        // User requested: "Login user pakai email + password."
-        // Also "User harus verify OTP sebelum bisa checkout."
-        // Plan: Login sets session. OTP is for verification (emailVerifiedAt).
-        // If user is not verified, they can still login but can't checkout?
-        // User said: "Wajib login sebelum membeli." and "User harus verify OTP sebelum bisa checkout."
-        // This implies login is enough for browsing, but checkout needs verify.
-        // AND "Setelah register, kirim OTP... User harus verify OTP sebelum bisa checkout."
-        // Wait, typical flow is register -> verify -> login OR register -> login -> verify.
-        // The prompt says: "Register/Login + verifikasi email via OTP".
-        // Let's allow login. If not verified, UI shows "Please verify email".
+        // Login sukses → reset counter
+        loginAttempts.delete(ip);
 
         await login({
             id: user.id,
@@ -48,11 +74,6 @@ export async function POST(req: NextRequest) {
             role: user.role,
             isVerified: !!user.emailVerifiedAt,
         });
-
-        // Check if verified, if not send OTP?
-        // "Setelah register, kirim OTP".
-        // If user logs in but not verified, maybe trigger OTP resend?
-        // For now, just login.
 
         return NextResponse.json({
             message: 'Login successful',
