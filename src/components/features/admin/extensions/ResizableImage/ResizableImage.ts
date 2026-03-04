@@ -7,16 +7,18 @@ export const ResizableImage = Image.extend({
         return {
             ...this.parent?.(),
             width: {
-                default: '100%',
+                default: null,
                 renderHTML: attributes => {
+                    if (!attributes.width) return {};
                     return {
                         width: attributes.width,
                     };
                 },
             },
             height: {
-                default: 'auto',
+                default: null,
                 renderHTML: attributes => {
+                    if (!attributes.height) return {};
                     return {
                         height: attributes.height,
                     };
