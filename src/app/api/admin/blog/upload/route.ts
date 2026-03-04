@@ -3,9 +3,14 @@ import { getSession } from '@/lib/session';
 import { uploadToR2 } from '@/lib/r2';
 
 export async function POST(req: NextRequest) {
+    console.log('--- UPLOAD ROUTE HIT ---');
+    console.log('Headers:', Object.fromEntries(req.headers));
     const session = await getSession();
+    console.log('Session result:', session);
+
     if (!session || session.role !== 'ADMIN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        console.log('Unauthorized triggered. Session is either null or not ADMIN.');
+        return NextResponse.json({ error: 'Unauthorized', debug_session: session }, { status: 401 });
     }
 
     try {

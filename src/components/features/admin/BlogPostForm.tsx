@@ -86,7 +86,8 @@ export default function BlogPostForm({
         try {
             const res = await fetch('/api/admin/blog/upload', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'same-origin'
             });
 
             const data = await res.json();
