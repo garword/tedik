@@ -30,6 +30,16 @@ export default function SearchBar() {
                 className="block w-full pl-10 pr-3 py-2 border-0 bg-gray-100 rounded-full leading-5 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-500 sm:text-sm transition-colors"
                 placeholder="Cari produk di sini..."
                 onChange={(e) => handleSearch(e.target.value)}
+                onFocus={() => {
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('searchFocus', { detail: { isFocused: true } }));
+                    }
+                }}
+                onBlur={() => {
+                    if (typeof window !== 'undefined') {
+                        window.dispatchEvent(new CustomEvent('searchFocus', { detail: { isFocused: false } }));
+                    }
+                }}
                 defaultValue={searchParams.get('q')?.toString()}
             />
         </div>

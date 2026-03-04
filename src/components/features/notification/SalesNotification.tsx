@@ -10,6 +10,7 @@ import {
     faSpotify, faTwitch, faDiscord, faTelegram, faLinkedin
 } from '@fortawesome/free-brands-svg-icons';
 import { faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { cn } from '@/lib/utils';
 
 type NotificationData = {
     id: string;
@@ -29,6 +30,8 @@ export default function SalesNotification() {
     const pathname = usePathname();
     const [isVisible, setIsVisible] = useState(false);
     const [data, setData] = useState<NotificationData | null>(null);
+    const [isCsOpen, setIsCsOpen] = useState(false);
+    const [isSearchFocused, setIsSearchFocused] = useState(false);
 
     // Queue management
     const queueRef = useRef<NotificationData[]>([]);
@@ -79,7 +82,7 @@ export default function SalesNotification() {
 
     // Process Queue
     const processQueue = () => {
-        if (processingRef.current || queueRef.current.length === 0 || shouldHide) return;
+        if (processingRef.current || queueRef.current.length === 0 || shouldHide || isCsOpen || isSearchFocused) return;
 
         processingRef.current = true;
         const nextItem = queueRef.current.shift(); // Dequeue
@@ -123,14 +126,40 @@ export default function SalesNotification() {
 
     // Handle when visibility changes to false (cleanup if needed) or re-trigger
     useEffect(() => {
-        if (!isVisible && !processingRef.current && queueRef.current.length > 0) {
+        if (!isVisible && !processingRef.current && queueRef.current.length > 0 && !isCsOpen && !isSearchFocused) {
             // Retry if queue has items and we are idle
             processQueue();
         }
-    }, [isVisible]);
+    }, [isVisible, isCsOpen, isSearchFocused]);
 
+    // Handle CS Widget & Search toggle events
+    useEffect(() => {
+        const handleCsToggle = (e: CustomEvent<{ isOpen: boolean }>) => {
+            const isOpen = e.detail.isOpen;
+            setIsCsOpen(isOpen);
+            if (isOpen) {
+                setIsVisible(false); // Force hide immediately
+            }
+        };
 
-    if (shouldHide || !data) return null;
+        const handleSearchFocus = (e: CustomEvent<{ isFocused: boolean }>) => {
+            const isFocused = e.detail.isFocused;
+            setIsSearchFocused(isFocused);
+            if (isFocused) {
+                setIsVisible(false);
+            }
+        }
+
+        window.addEventListener('toggleCsWidget', handleCsToggle as EventListener);
+        window.addEventListener('searchFocus', handleSearchFocus as EventListener);
+
+        return () => {
+            window.removeEventListener('toggleCsWidget', handleCsToggle as EventListener);
+            window.removeEventListener('searchFocus', handleSearchFocus as EventListener);
+        }
+    }, []);
+
+    if (shouldHide || !data || isCsOpen || isSearchFocused) return null;
 
     const isSmm = data.categoryType === 'SOSMED' || data.categoryType === 'PULSA'; // Adjust based on your schema logic
     // Just a fallback check for SMM styling
@@ -140,10 +169,14 @@ export default function SalesNotification() {
         <AnimatePresence>
             {isVisible && (
                 <motion.div
-                    initial={{ opacity: 0, y: 50, x: 0 }} // Start from bottom
-                    animate={{ opacity: 1, y: 0, x: 0 }}
-                    exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                    className="fixed bottom-4 left-4 z-[90] max-w-[320px] w-auto bg-white/90 backdrop-blur-md border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white transition-colors"
+                    initial={{ opacity: 0, y: 50, x: "-50%" }} // Important: x offset for perfectly centered entrance
+                    animate={{ opacity: 1, y: 0, x: "-50%" }}
+                    exit={{ opacity: 0, y: 20, scale: 0.95, x: "-50%" }}
+                    className={cn(
+                        "fixed z-[90] max-w-[320px] w-[calc(100%-2rem)] bg-white/90 backdrop-blur-md border border-white/40", // Set standard width
+                        "shadow-[0_8px_30px_rgb(0,0,0,0.12)] rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-white transition-colors",
+                        "top-28 left-1/2 sm:top-auto sm:bottom-4 sm:left-4 sm:translate-x-0 sm:!transform-none sm:w-auto" // Top Center Mobile, Bottom Left Desktop
+                    )}
                 >
                     {/* Progress Bar */}
                     <motion.div

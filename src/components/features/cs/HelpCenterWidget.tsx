@@ -50,6 +50,11 @@ export default function HelpCenterWidget({ whatsapp, telegram, faqs }: HelpCente
 
     // Reset view when modal is closed
     useEffect(() => {
+        // Dispatch event for other components (like SalesNotification) to know CS widget state
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('toggleCsWidget', { detail: { isOpen } }));
+        }
+
         if (!isOpen) {
             setTimeout(() => {
                 setActiveView('home');
@@ -318,11 +323,11 @@ export default function HelpCenterWidget({ whatsapp, telegram, faqs }: HelpCente
 
                             {/* Content Areas */}
                             {activeView === 'home' ? (
-                                <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50/50 text-center relative overflow-y-auto w-full">
+                                <div className="flex-1 flex flex-col items-center p-6 sm:p-8 bg-gray-50/50 text-center relative overflow-y-auto w-full">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-100 rounded-full blur-3xl opacity-50 translate-x-10 -translate-y-10"></div>
                                     <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-100 rounded-full blur-3xl opacity-50 -translate-x-10 translate-y-10"></div>
 
-                                    <div className="w-24 h-24 bg-white rounded-full shadow-md flex items-center justify-center mb-6 relative z-10 p-1">
+                                    <div className="w-24 h-24 bg-white rounded-full shadow-md flex items-center justify-center mb-6 relative z-10 p-1 mt-auto shrink-0">
                                         <div className="w-full h-full rounded-full overflow-hidden relative">
                                             <img
                                                 src={`/avatar-milo.png?t=${Date.now()}`}
@@ -337,7 +342,7 @@ export default function HelpCenterWidget({ whatsapp, telegram, faqs }: HelpCente
                                         Pilih platform di bawah ini untuk mulai ngobrol dan dapatkan bantuan cepat.
                                     </p>
 
-                                    <div className="flex flex-col gap-3 w-full max-w-[260px] relative z-10">
+                                    <div className="flex flex-col gap-3 w-full max-w-[260px] relative z-10 mb-auto shrink-0">
                                         <button
                                             onClick={handleWhatsapp}
                                             className="flex items-center justify-between p-4 rounded-2xl bg-white hover:bg-emerald-50 border border-gray-100 hover:border-emerald-200 shadow-sm transition-all duration-200 group"
