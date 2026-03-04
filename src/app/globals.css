@@ -227,4 +227,23 @@
         @apply bg-green-500/80;
         /* Visible on Hover (PC) OR Scrolling (Mobile) */
     }
+
+    /* Fix image alignment in Tiptap/Prose */
+    .prose img[style*="text-align: center"] {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .prose img[style*="text-align: right"] {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
+
+    .prose img[style*="text-align: left"] {
+        display: block;
+        margin-left: 0;
+        margin-right: auto;
+    }
 }
