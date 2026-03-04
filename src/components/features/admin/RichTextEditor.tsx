@@ -4,7 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 // @ts-ignore - Types exist but project moduleResolution doesn't support package.json exports pattern
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
-import ImageResize from 'tiptap-extension-resize-image';
+import { ResizableImage } from './extensions/ResizableImage/ResizableImage';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -89,7 +89,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         extensions: [
             StarterKit,
             Underline,
-            ImageResize.configure({
+            ResizableImage.configure({
                 inline: true,
             }),
             Link.configure({
@@ -338,7 +338,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         <div className="relative border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col">
 
             {editor && (
-                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bg-white border border-gray-200 shadow-xl rounded-xl p-1 flex items-center gap-1 z-50">
+                <BubbleMenu editor={editor} className="bg-white border border-gray-200 shadow-xl rounded-xl p-1 flex items-center gap-1 z-50">
                     <ToolbarButton
                         title="Bold (Ctrl+B)"
                         onClick={() => editor.chain().focus().toggleBold().run()}
