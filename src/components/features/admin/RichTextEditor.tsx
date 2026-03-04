@@ -2,7 +2,7 @@
 
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
+import ImageResize from 'tiptap-extension-resize-image';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
@@ -68,10 +68,8 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         extensions: [
             StarterKit,
             Underline,
-            Image.configure({
-                HTMLAttributes: {
-                    class: 'rounded-xl max-w-full h-auto my-4',
-                },
+            ImageResize.configure({
+                inline: true,
             }),
             Link.configure({
                 openOnClick: false,
@@ -80,7 +78,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 },
             }),
             TextAlign.configure({
-                types: ['heading', 'paragraph'],
+                types: ['heading', 'paragraph', 'image'],
             }),
             CharacterCount,
         ],
