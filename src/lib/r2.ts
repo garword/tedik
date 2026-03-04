@@ -26,12 +26,17 @@ async function getR2Config(): Promise<R2Config> {
         throw new Error('Konfigurasi Cloudflare R2 belum lengkap. Silakan isi di Admin Panel → Settings.');
     }
 
+    let pUrl = publicUrl.content.replace(/\/+$/, ''); // Remove trailing slash
+    if (!pUrl.startsWith('http://') && !pUrl.startsWith('https://')) {
+        pUrl = 'https://' + pUrl;
+    }
+
     return {
         accountId: accountId.content,
         accessKeyId: accessKeyId.content,
         secretAccessKey: secretAccessKey.content,
         bucketName: bucketName.content,
-        publicUrl: publicUrl.content.replace(/\/+$/, ''), // Remove trailing slash
+        publicUrl: pUrl,
     };
 }
 
