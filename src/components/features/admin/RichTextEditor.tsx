@@ -1,20 +1,40 @@
 'use client';
 
-import { useEditor, EditorContent } from '@tiptap/react';
+// @ts-ignore - BubbleMenu exists at runtime
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import ImageResize from 'tiptap-extension-resize-image';
 import Link from '@tiptap/extension-link';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import CharacterCount from '@tiptap/extension-character-count';
+
+// New Extensions
+import { Color } from '@tiptap/extension-color';
+import { TextStyle } from '@tiptap/extension-text-style';
+import { FontFamily } from '@tiptap/extension-font-family';
+import { Highlight } from '@tiptap/extension-highlight';
+import { Subscript } from '@tiptap/extension-subscript';
+import { Superscript } from '@tiptap/extension-superscript';
+import { Table } from '@tiptap/extension-table';
+import { TableRow } from '@tiptap/extension-table-row';
+import { TableCell } from '@tiptap/extension-table-cell';
+import { TableHeader } from '@tiptap/extension-table-header';
+import { CodeBlockLowlight } from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+
 import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
     Link as LinkIcon, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo,
-    Loader2, ChevronDown, Check, X, Sparkles
+    Loader2, ChevronDown, Check, X, Sparkles,
+    Type, Baseline, Highlighter, Superscript as SupIcon, Subscript as SubIcon,
+    Table as TableIcon, Code, RemoveFormatting, Palette
 } from 'lucide-react';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
+
+const lowlight = createLowlight(common);
 
 interface RichTextEditorProps {
     content: string;
@@ -81,6 +101,26 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 types: ['heading', 'paragraph', 'image'],
             }),
             CharacterCount,
+            Color,
+            TextStyle,
+            FontFamily,
+            Highlight.configure({
+                multicolor: true,
+            }),
+            Subscript,
+            Superscript,
+            Table.configure({
+                resizable: true,
+                HTMLAttributes: {
+                    class: 'min-w-full my-4 border-collapse border border-gray-300',
+                },
+            }),
+            TableRow,
+            TableHeader,
+            TableCell,
+            CodeBlockLowlight.configure({
+                lowlight,
+            }),
         ],
         content: content,
         immediatelyRender: false,
@@ -294,7 +334,49 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     );
 
     return (
-        <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col">
+        <div className="relative border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm flex flex-col">
+
+            {editor && (
+                <BubbleMenu editor={editor} tippyOptions={{ duration: 100 }} className="bg-white border border-gray-200 shadow-xl rounded-xl p-1 flex items-center gap-1 z-50">
+                    <ToolbarButton
+                        title="Bold (Ctrl+B)"
+                        onClick={() => editor.chain().focus().toggleBold().run()}
+                        isActive={editor.isActive('bold')}
+                        icon={Bold}
+                    />
+                    <ToolbarButton
+                        title="Italic (Ctrl+I)"
+                        onClick={() => editor.chain().focus().toggleItalic().run()}
+                        isActive={editor.isActive('italic')}
+                        icon={Italic}
+                    />
+                    <ToolbarButton
+                        title="Underline (Ctrl+U)"
+                        onClick={() => editor.chain().focus().toggleUnderline().run()}
+                        isActive={editor.isActive('underline')}
+                        icon={UnderlineIcon}
+                    />
+                    <ToolbarButton
+                        title="Strikethrough"
+                        onClick={() => editor.chain().focus().toggleStrike().run()}
+                        isActive={editor.isActive('strike')}
+                        icon={Strikethrough}
+                    />
+                    <div className="w-[1px] h-5 bg-gray-200 mx-1"></div>
+                    <ToolbarButton
+                        title="Highlight"
+                        onClick={() => editor.chain().focus().toggleHighlight().run()}
+                        isActive={editor.isActive('highlight')}
+                        icon={Highlighter}
+                    />
+                    <div className="w-[1px] h-5 bg-gray-200 mx-1"></div>
+                    <ToolbarButton
+                        title="Clear Formatting"
+                        onClick={() => editor.chain().focus().unsetAllMarks().run()}
+                        icon={RemoveFormatting}
+                    />
+                </BubbleMenu>
+            )}
 
             {/* Toolbar Atas */}
             <div className="bg-gray-50 border-b border-gray-200 p-2 flex flex-wrap gap-1 sticky top-0 z-10">
@@ -356,6 +438,29 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                 </div>
 
                 <div className="flex items-center space-x-1 mr-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
+                    <select
+                        onChange={e => {
+                            if (e.target.value === '') {
+                                editor.chain().focus().unsetFontFamily().run();
+                            } else {
+                                editor.chain().focus().setFontFamily(e.target.value).run();
+                            }
+                        }}
+                        value={editor.getAttributes('textStyle').fontFamily || ''}
+                        className="px-2 py-1 text-sm border-none bg-transparent rounded-lg focus:ring-0 cursor-pointer w-[120px] outline-none text-gray-700 font-medium"
+                    >
+                        <option value="">Default Font</option>
+                        <option value="Inter" style={{ fontFamily: 'Inter' }}>Inter</option>
+                        <option value="Arial" style={{ fontFamily: 'Arial' }}>Arial</option>
+                        <option value="Georgia" style={{ fontFamily: 'Georgia' }}>Georgia</option>
+                        <option value="Times New Roman" style={{ fontFamily: 'Times New Roman' }}>Times New Roman</option>
+                        <option value="Trebuchet MS" style={{ fontFamily: 'Trebuchet MS' }}>Trebuchet MS</option>
+                        <option value="Verdana" style={{ fontFamily: 'Verdana' }}>Verdana</option>
+                        <option value="monospace" style={{ fontFamily: 'monospace' }}>Monospace</option>
+                    </select>
+                </div>
+
+                <div className="flex items-center space-x-1 mr-2 bg-white p-1 rounded-xl shadow-sm border border-gray-100">
                     <ToolbarButton
                         title="Bold (Ctrl+B)"
                         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -379,6 +484,35 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                         onClick={() => editor.chain().focus().toggleStrike().run()}
                         isActive={editor.isActive('strike')}
                         icon={Strikethrough}
+                    />
+                    <ToolbarButton
+                        title="Subscript"
+                        onClick={() => editor.chain().focus().toggleSubscript().run()}
+                        isActive={editor.isActive('subscript')}
+                        icon={SubIcon}
+                    />
+                    <ToolbarButton
+                        title="Superscript"
+                        onClick={() => editor.chain().focus().toggleSuperscript().run()}
+                        isActive={editor.isActive('superscript')}
+                        icon={SupIcon}
+                    />
+                    <div className="w-[1px] h-6 bg-gray-200 mx-1"></div>
+                    <div className="flex items-center space-x-1 rounded-lg hover:bg-gray-100 p-1 cursor-pointer relative" title="Text Color">
+                        <Palette size={18} className="text-gray-600" />
+                        <input
+                            type="color"
+                            onInput={event => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()}
+                            value={editor.getAttributes('textStyle').color || '#000000'}
+                            className="w-6 h-6 p-0 border-0 bg-transparent cursor-pointer rounded-md overflow-hidden"
+                            title="Text Color"
+                        />
+                    </div>
+                    <ToolbarButton
+                        title="Highlight"
+                        onClick={() => editor.chain().focus().toggleHighlight().run()}
+                        isActive={editor.isActive('highlight')}
+                        icon={Highlighter}
                     />
                 </div>
 
@@ -446,6 +580,17 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                     >
                         {isUploading ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <ImageIcon size={18} />}
                     </button>
+                    <ToolbarButton
+                        title="Insert Table"
+                        onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+                        icon={TableIcon}
+                    />
+                    <ToolbarButton
+                        title="Code Block"
+                        onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                        isActive={editor.isActive('codeBlock')}
+                        icon={Code}
+                    />
                 </div>
 
                 <div className="flex-1"></div>
