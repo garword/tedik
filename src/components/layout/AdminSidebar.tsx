@@ -339,8 +339,8 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                         href="/admin/seo"
                         onClick={() => setIsMobileOpen(false)}
                         className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium transition-all text-sm ${pathname === '/admin/seo'
-                                ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
-                                : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                            ? 'bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                             }`}
                     >
                         <div className={`p-1 rounded-md ${pathname === '/admin/seo' ? 'bg-emerald-100' : 'bg-gray-100'
@@ -539,7 +539,10 @@ export default function AdminSidebar({ user }: AdminSidebarProps) {
                         <p className="text-xs text-gray-400 truncate group-hover:text-emerald-500">{user?.role || 'ADMIN'}</p>
                     </div>
                     <button
-                        onClick={() => window.location.href = '/admin/logout'}
+                        onClick={async () => {
+                            await fetch('/api/auth/logout', { method: 'POST' });
+                            window.location.href = '/admin/login';
+                        }}
                         className="text-gray-400 hover:text-red-500 transition-colors"
                         title="Logout"
                     >
