@@ -1,7 +1,8 @@
 'use client';
 
-// @ts-ignore - BubbleMenu exists at runtime
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
+// @ts-ignore - Types exist but project moduleResolution doesn't support package.json exports pattern
+import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import ImageResize from 'tiptap-extension-resize-image';
 import Link from '@tiptap/extension-link';
