@@ -628,71 +628,78 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
             {/* Alt Text SEO Modal */}
             {showAltModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) confirmImageInsert(); }}>
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) confirmImageInsert(); }}>
+                    <div className="bg-white rounded-[24px] shadow-2xl shadow-slate-900/20 w-full max-w-lg overflow-hidden transform transition-all" onClick={(e) => e.stopPropagation()}>
+
                         {/* Modal Header */}
-                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-white">
-                                <Sparkles className="w-5 h-5" />
-                                <h3 className="font-bold text-lg">Deskripsi Gambar (SEO)</h3>
+                        <div className="px-6 pt-6 pb-4 flex items-center justify-between border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                                    <Sparkles className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-lg text-slate-800 tracking-tight">Atribut Gambar SEO</h3>
+                                    <p className="text-[13px] text-slate-500 font-medium">Lengkapi detail untuk performa pencarian</p>
+                                </div>
                             </div>
-                            <button onClick={cancelImageInsert} className="text-white/70 hover:text-white transition-colors">
+                            <button onClick={cancelImageInsert} className="w-8 h-8 flex items-center justify-center rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors self-start">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Image Preview */}
-                        <div className="px-6 pt-5">
-                            <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
-                                <img src={pendingImageUrl} alt="Preview" className="w-full h-full object-contain" />
+                        <div className="px-6 pt-6">
+                            <div className="relative h-40 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-50/50 flex items-center justify-center p-3 pattern-dots pattern-slate-200 pattern-bg-transparent pattern-size-4 pattern-opacity-100">
+                                <img src={pendingImageUrl} alt="Preview" className="max-w-full max-h-full object-contain rounded-lg shadow-sm" />
                             </div>
                         </div>
 
                         {/* Form Fields */}
-                        <div className="px-6 py-5 space-y-4">
+                        <div className="px-6 py-6 space-y-5">
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                                    Alt Text <span className="text-emerald-600">(Wajib untuk SEO)</span>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                                    Alt Text
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">Wajib</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={altText}
                                     onChange={(e) => setAltText(e.target.value)}
-                                    placeholder="Contoh: Panduan lengkap cara bermain Mobile Legends 2026"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                    placeholder="Contoh: Panduan lengkap cara bermain..."
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 outline-none transition-all text-sm text-slate-800 placeholder-slate-400 font-medium"
                                     autoFocus
                                     onKeyDown={(e) => { if (e.key === 'Enter') confirmImageInsert(); }}
                                 />
-                                <p className="text-xs text-gray-500 mt-1.5">Deskripsikan gambar ini seolah-olah untuk pembaca tunanetra. Google menggunakan teks ini untuk memahami gambar Anda.</p>
+                                <p className="text-[13px] text-slate-500 mt-2">Membantu Google memahami konteks gambar Anda.</p>
                             </div>
 
                             <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1.5">
-                                    Title <span className="text-gray-400 font-normal">(Opsional — Tooltip)</span>
+                                <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                                    Judul Tooltip
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">Opsional</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={imageTitle}
                                     onChange={(e) => setImageTitle(e.target.value)}
-                                    placeholder="Contoh: Screenshot gameplay ML 2026"
-                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                    placeholder="Contoh: Screenshot gameplay terbaru"
+                                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-slate-500/10 focus:border-slate-400 outline-none transition-all text-sm text-slate-800 placeholder-slate-400 font-medium"
                                     onKeyDown={(e) => { if (e.key === 'Enter') confirmImageInsert(); }}
                                 />
-                                <p className="text-xs text-gray-500 mt-1.5">Teks ini muncul saat pengunjung mengarahkan kursor ke gambar.</p>
                             </div>
                         </div>
 
                         {/* Actions */}
-                        <div className="px-6 pb-5 flex gap-3">
+                        <div className="px-6 py-5 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
                             <button
                                 onClick={cancelImageInsert}
-                                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors text-sm"
+                                className="px-5 py-2.5 rounded-xl text-slate-600 font-semibold hover:bg-slate-200/50 hover:text-slate-900 transition-all text-sm"
                             >
                                 Batalkan
                             </button>
                             <button
                                 onClick={confirmImageInsert}
-                                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm flex items-center justify-center gap-2"
+                                className="px-6 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-500 focus:ring-4 focus:ring-emerald-500/20 transition-all shadow-[0_4px_12px_rgba(5,150,105,0.2)] hover:shadow-[0_6px_16px_rgba(5,150,105,0.3)] hover:-translate-y-0.5 text-sm flex items-center justify-center gap-2"
                             >
                                 <ImageIcon className="w-4 h-4" />
                                 Sisipkan Gambar
