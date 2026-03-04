@@ -46,6 +46,7 @@ function createR2Client(config: R2Config): S3Client {
             accessKeyId: config.accessKeyId,
             secretAccessKey: config.secretAccessKey,
         },
+        forcePathStyle: true, // Required for Cloudflare R2 compatibility sometimes
     });
 }
 
