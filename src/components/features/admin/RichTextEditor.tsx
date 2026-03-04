@@ -11,7 +11,7 @@ import {
     Bold, Italic, Underline as UnderlineIcon, Strikethrough,
     List, ListOrdered, AlignLeft, AlignCenter, AlignRight, AlignJustify,
     Link as LinkIcon, Image as ImageIcon, Heading1, Heading2, Quote, Undo, Redo,
-    Loader2, ChevronDown, Check
+    Loader2, ChevronDown, Check, X, Sparkles
 } from 'lucide-react';
 import { useCallback, useState, useRef, useEffect } from 'react';
 import { useToast } from '@/context/ToastContext';
@@ -26,7 +26,13 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     const [isUploading, setIsUploading] = useState(false);
     const [isHeadingMenuOpen, setIsHeadingMenuOpen] = useState(false);
     const headingMenuRef = useRef<HTMLDivElement>(null);
-    const editorRef = useRef<any>(null); // Menyimpan referensi editor agar tidak terkena bug stale closure TipTap
+    const editorRef = useRef<any>(null);
+
+    // Alt Text Modal State
+    const [showAltModal, setShowAltModal] = useState(false);
+    const [pendingImageUrl, setPendingImageUrl] = useState('');
+    const [altText, setAltText] = useState('');
+    const [imageTitle, setImageTitle] = useState('');
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -186,7 +192,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         }
 
         setIsUploading(true);
-        const toastId = showToast('Mengunggah gambar ke ImgBB...', 'info');
+        showToast('Mengunggah gambar ke Cloudflare R2...', 'info');
 
         const formData = new FormData();
         formData.append('image', file);
@@ -200,13 +206,12 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             const data = await res.json();
 
             if (res.ok && data.url) {
-                // Sisipkan URL asli dari ImgBB ke dalam editor (di posisi kursor saat ini)
-                if (editorRef.current) {
-                    editorRef.current.chain().focus().setImage({ src: data.url }).run();
-                    showToast('Gambar berhasil diunggah', 'success');
-                } else {
-                    showToast('Gagal memuat editor interaktif', 'error');
-                }
+                // Show alt text modal instead of inserting directly
+                setPendingImageUrl(data.url);
+                setAltText('');
+                setImageTitle('');
+                setShowAltModal(true);
+                showToast('Gambar berhasil diunggah! Silakan isi deskripsi SEO.', 'success');
             } else {
                 showToast(data.error || 'Gagal mengunggah gambar', 'error');
             }
@@ -216,6 +221,30 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         } finally {
             setIsUploading(false);
         }
+    };
+
+    const confirmImageInsert = () => {
+        if (!editorRef.current || !pendingImageUrl) return;
+
+        editorRef.current.chain().focus().setImage({
+            src: pendingImageUrl,
+            alt: altText || 'Gambar artikel blog',
+            title: imageTitle || undefined,
+        }).run();
+
+        // Reset modal state
+        setShowAltModal(false);
+        setPendingImageUrl('');
+        setAltText('');
+        setImageTitle('');
+    };
+
+    const cancelImageInsert = () => {
+        setShowAltModal(false);
+        setPendingImageUrl('');
+        setAltText('');
+        setImageTitle('');
+        showToast('Gambar dibatalkan (file tetap tersimpan di R2)', 'info');
     };
 
     const addImage = useCallback(() => {
@@ -451,6 +480,82 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
                     Auto-save Ready
                 </span>
             </div>
+
+            {/* Alt Text SEO Modal */}
+            {showAltModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) confirmImageInsert(); }}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                        {/* Modal Header */}
+                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-white">
+                                <Sparkles className="w-5 h-5" />
+                                <h3 className="font-bold text-lg">Deskripsi Gambar (SEO)</h3>
+                            </div>
+                            <button onClick={cancelImageInsert} className="text-white/70 hover:text-white transition-colors">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Image Preview */}
+                        <div className="px-6 pt-5">
+                            <div className="relative aspect-video w-full rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
+                                <img src={pendingImageUrl} alt="Preview" className="w-full h-full object-contain" />
+                            </div>
+                        </div>
+
+                        {/* Form Fields */}
+                        <div className="px-6 py-5 space-y-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                                    Alt Text <span className="text-emerald-600">(Wajib untuk SEO)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={altText}
+                                    onChange={(e) => setAltText(e.target.value)}
+                                    placeholder="Contoh: Panduan lengkap cara bermain Mobile Legends 2026"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => { if (e.key === 'Enter') confirmImageInsert(); }}
+                                />
+                                <p className="text-xs text-gray-500 mt-1.5">Deskripsikan gambar ini seolah-olah untuk pembaca tunanetra. Google menggunakan teks ini untuk memahami gambar Anda.</p>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1.5">
+                                    Title <span className="text-gray-400 font-normal">(Opsional — Tooltip)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={imageTitle}
+                                    onChange={(e) => setImageTitle(e.target.value)}
+                                    placeholder="Contoh: Screenshot gameplay ML 2026"
+                                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all text-sm"
+                                    onKeyDown={(e) => { if (e.key === 'Enter') confirmImageInsert(); }}
+                                />
+                                <p className="text-xs text-gray-500 mt-1.5">Teks ini muncul saat pengunjung mengarahkan kursor ke gambar.</p>
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="px-6 pb-5 flex gap-3">
+                            <button
+                                onClick={cancelImageInsert}
+                                className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors text-sm"
+                            >
+                                Batalkan
+                            </button>
+                            <button
+                                onClick={confirmImageInsert}
+                                className="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-600/20 text-sm flex items-center justify-center gap-2"
+                            >
+                                <ImageIcon className="w-4 h-4" />
+                                Sisipkan Gambar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

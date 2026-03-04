@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Save, Loader2, Key, ShieldCheck, Eye, EyeOff, RefreshCw, Link, Copy } from 'lucide-react';
+import { Save, Loader2, Key, ShieldCheck, Eye, EyeOff, RefreshCw, Link, Copy, Cloud, HardDrive } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import GoogleAuthConfigForm from '@/components/features/admin/GoogleAuthConfigForm';
 import ResendConfigForm from '@/components/features/admin/ResendConfigForm';
@@ -15,8 +15,16 @@ export default function SettingsPage() {
     const [turnstileSecretKey, setTurnstileSecretKey] = useState('');
     const [imgbbApiKey, setImgbbApiKey] = useState('');
 
+    // Cloudflare R2
+    const [r2AccountId, setR2AccountId] = useState('');
+    const [r2AccessKeyId, setR2AccessKeyId] = useState('');
+    const [r2SecretAccessKey, setR2SecretAccessKey] = useState('');
+    const [r2BucketName, setR2BucketName] = useState('');
+    const [r2PublicUrl, setR2PublicUrl] = useState('');
+
     // Visibility Toggles
     const [showTurnstileSecret, setShowTurnstileSecret] = useState(false);
+    const [showR2Secret, setShowR2Secret] = useState(false);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -31,6 +39,11 @@ export default function SettingsPage() {
                 setTurnstileSiteKey(data.turnstileSiteKey || '');
                 setTurnstileSecretKey(data.turnstileSecretKey || '');
                 setImgbbApiKey(data.imgbbApiKey || '');
+                setR2AccountId(data.r2AccountId || '');
+                setR2AccessKeyId(data.r2AccessKeyId || '');
+                setR2SecretAccessKey(data.r2SecretAccessKey || '');
+                setR2BucketName(data.r2BucketName || '');
+                setR2PublicUrl(data.r2PublicUrl || '');
                 setLoading(false);
             });
     }, []);
@@ -48,7 +61,12 @@ export default function SettingsPage() {
                     openRouterModel,
                     turnstileSiteKey,
                     turnstileSecretKey,
-                    imgbbApiKey
+                    imgbbApiKey,
+                    r2AccountId,
+                    r2AccessKeyId,
+                    r2SecretAccessKey,
+                    r2BucketName,
+                    r2PublicUrl,
                 })
             });
             if (res.ok) {
@@ -158,30 +176,97 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                {/* Cloud Storage & Blog Configuration */}
+                {/* Cloudflare R2 Storage Configuration */}
                 <div className="bg-white rounded-2xl md:rounded-3xl shadow-sm border border-gray-100 p-6 md:p-8">
-                    <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <div className="p-2 bg-emerald-50 rounded-lg">
-                            <Key className="w-5 h-5 text-emerald-600" />
+                    <h2 className="text-lg md:text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+                        <div className="p-2 bg-orange-50 rounded-lg">
+                            <Cloud className="w-5 h-5 text-orange-600" />
                         </div>
-                        Storage & Blog Settings
+                        Cloudflare R2 Storage
                     </h2>
+                    <p className="text-sm text-gray-500 mb-6 ml-11">Penyimpanan gambar blog menggunakan Cloudflare R2 (S3-Compatible). Semua upload gambar dari editor blog akan masuk ke sini.</p>
 
-                    <div className="space-y-6">
+                    <div className="space-y-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Account ID</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={r2AccountId}
+                                        onChange={e => setR2AccountId(e.target.value)}
+                                        placeholder="a1b2c3d4e5f6..."
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                    />
+                                    <HardDrive className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1.5">Terlihat di URL bar Cloudflare Dashboard.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">Bucket Name</label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        value={r2BucketName}
+                                        onChange={e => setR2BucketName(e.target.value)}
+                                        placeholder="blog-images"
+                                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                    />
+                                    <Cloud className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                                </div>
+                            </div>
+                        </div>
+
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">ImgBB API Key (Blog Images)</label>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Access Key ID</label>
                             <div className="relative">
                                 <input
                                     type="text"
-                                    value={imgbbApiKey}
-                                    onChange={e => setImgbbApiKey(e.target.value)}
-                                    placeholder="cf41a1b..."
-                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                    value={r2AccessKeyId}
+                                    onChange={e => setR2AccessKeyId(e.target.value)}
+                                    placeholder="R2_ACCESS_KEY_ID"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all font-mono text-sm"
                                 />
                                 <Key className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
                             </div>
-                            <p className="text-xs text-gray-500 mt-2">
-                                Free image hosting API for the Blog Editor. Get it from <a href="https://api.imgbb.com/" target="_blank" rel="noreferrer" className="text-emerald-600 hover:underline">api.imgbb.com</a>.
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Secret Access Key</label>
+                            <div className="relative">
+                                <input
+                                    type={showR2Secret ? "text" : "password"}
+                                    value={r2SecretAccessKey}
+                                    onChange={e => setR2SecretAccessKey(e.target.value)}
+                                    placeholder="R2_SECRET_ACCESS_KEY"
+                                    className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                />
+                                <Key className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowR2Secret(!showR2Secret)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                >
+                                    {showR2Secret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1.5">Rahasiakan. Digunakan untuk autentikasi upload server-side.</p>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-semibold text-gray-700 mb-2">Public URL (R2.dev atau Custom Domain)</label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    value={r2PublicUrl}
+                                    onChange={e => setR2PublicUrl(e.target.value)}
+                                    placeholder="https://pub-xxxxx.r2.dev"
+                                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all font-mono text-sm"
+                                />
+                                <Link className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1.5">
+                                URL publik R2 bucket Anda. Bisa ditemukan di <a href="https://dash.cloudflare.com" target="_blank" rel="noreferrer" className="text-orange-600 hover:underline">R2 → Bucket → Settings → Public Access</a>.
                             </p>
                         </div>
                     </div>
